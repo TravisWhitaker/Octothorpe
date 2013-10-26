@@ -41,6 +41,8 @@ else
 ifeq ($(HEADER_WIDTH),64)
 	CFLAGS += -DHEADER_WIDTH=64
 endif
+endif
+endif
 
 
 .PHONY: all
