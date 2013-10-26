@@ -1,6 +1,6 @@
 Octothorpe
 ==========
 
-[![Build Status](https://travis-ci.org/[YOUR_GITHUB_USERNAME]/[YOUR_PROJECT_NAME].png)](https://travis-ci.org/[YOUR_GITHUB_USERNAME]/[YOUR_PROJECT_NAME])
+[![Build Status](https://travis-ci.org/TravisWhitaker/Octothorpe.png)](https://travis-ci.org/TravisWhitaker/Octothorpe)
 
 C dictionary implementation with a dual-key hash function
