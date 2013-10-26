@@ -3,13 +3,6 @@
 #ifndef OCTO_CARRY_H
 #define OCTO_CARRY_H
 
-#ifdef NO_STDINT
-typedef uint8_t unsigned char;
-typedef uint64_t unsigned long long int;
-#else
-#include <stdint.h>
-#endif
-
 typedef struct
 {
 	size_t keylen;

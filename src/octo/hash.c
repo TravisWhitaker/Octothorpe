@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <octo/types.h>
 #include <octo/hash.h>
 
 #define rotate_left(x, y) (uint64_t)(((x) << (y)) | ((x) >> (64 - (y))))

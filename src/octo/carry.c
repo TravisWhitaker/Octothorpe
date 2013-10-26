@@ -5,6 +5,7 @@
 
 #include <errno.h>
 
+#include <octo/types.h>
 #include <octo/debug.h>
 #include <octo/carry.h>
 
