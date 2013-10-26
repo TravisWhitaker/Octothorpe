@@ -21,7 +21,7 @@ NO_STDINT=
 
 # Enable debugging messages outside of the 'debug' target:
 ifeq ($(DEBUG_MSG),y)
-	CFLAGS += -DDBUG_MSG
+	CFLAGS += -DDEBUG_MSG_ENABLE
 endif
 
 # Manually disable the use of stdint.h if you lack the feature test macros:
@@ -48,20 +48,26 @@ endif
 .PHONY: all
 all: libocto.a
 
-libocto.a: hash.o
-	$(AR) $(ARFLAGS) libocto.a hash.o
+libocto.a: hash.o carry.o
+	$(AR) $(ARFLAGS) libocto.a hash.o carry.o
 
 hash.o: src/octo/hash.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/hash.c
 
+carry.o: src/octo/carry.c
+	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/carry.c
+
 .PHONY: test
-test: ;
+test:
+	$(CC) $(CFLAGS) $(INCLUDE) test/test_carry.c -o test_carry.test -L./ -locto
+	./test_carry.test
 
 .PHONY: check
-check: test ;
+check: test
 
 .PHONY: clean
 clean:
 	rm -f libocto.a
 	rm -f libocto.so
 	rm -f *.o
+	rm -f *.test
