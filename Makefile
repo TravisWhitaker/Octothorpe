@@ -2,7 +2,7 @@
 
 # libocto is developed with clang:
 CC=clang
-CLFAGS= -Wall -Wextra -pedantic -O2 -pipe -march=native
+CFLAGS= -Wall -Wextra -pedantic -O2 -pipe -march=native
 DEBUG_CFLAGS= -Wall -Wextra -pedantic -O0 -g -pipe -DDEBUG_MSG
 INCLUDE= -I./include
 
