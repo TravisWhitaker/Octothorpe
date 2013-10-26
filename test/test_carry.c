@@ -14,10 +14,12 @@ int main()
 	if(test_carry == NULL)
 	{
 		printf("test_carry: FAILED: octo_carry_init returned NULL\n");
+		return 1;
 	}
 	else
 	{
 		printf("test_carry: SUCCESS!\n");
+		return 0;
 	}
-	return 0;
+	return 1;
 }
