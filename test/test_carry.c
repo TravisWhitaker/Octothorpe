@@ -19,7 +19,8 @@ int main()
 	else
 	{
 		printf("test_carry: SUCCESS!\n");
-		return 0;
+		// Testing build failure:
+		return 1;
 	}
 	return 1;
 }
