@@ -106,10 +106,33 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 	uint64_t index;
 	uint8_t bucket_occupied;
 	uint8_t bucket_available;
+
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 	bucket_occupied = *((uint8_t *)*(dict->buckets + index));
 	bucket_available = *((uint8_t *)*(dict->buckets + index) + 1);
+
+	// If there's nothing in the bucket yet, insert the record:
+	if(bucket_occupied == 0)
+	{
+		memcpy((uint8_t *)*(dict->buckets + index) + 2, key, dict->keylen);
+		memcpy((uint8_t *)*(dict->buckets + index) + 2 + dict->keylen, value, dict->vallen);
+		bucket_occupied++;
+		memcpy(((uint8_t *)*(dict->buckets + index)), &bucket_occupied, sizeof(uint8_t));
+		return 0;
+	}
+
+	// Check to see if the key is already in the bucket:
+	for(uint8_t i = 0; i < bucket_occupied; i++)
+	{
+		if(memcmp(key, (uint8_t *)*(dict->buckets + index) + 2 + (i * dict->cellen), dict->keylen) == 0)
+		{
+			memcpy((uint8_t *)*(dict->buckets + index) + 2 + (i * dict->cellen) + dict->keylen, value, dict->vallen);
+			return 0;
+		}
+	}
+
+	// If the bucket is at capacity, expand it:
 	if(bucket_available == bucket_occupied)
 	{
 		void *bigger_bucket = realloc(*(dict->buckets + index),(2 * sizeof(uint8_t)) + (dict->cellen * (bucket_available + 1)));
@@ -120,8 +143,14 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 			return 1;
 		}
 		*(dict->buckets + index) = bigger_bucket;
+		bucket_available++;
+		memcpy(((uint8_t *)*(dict->buckets + index) + 1), &bucket_available, sizeof(uint8_t));
 	}
-	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied),key,dict->keylen);
+
+	// Insert the record at the end of the bucket:
+	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied), key, dict->keylen);
 	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied) + dict->keylen, value, dict->vallen);
+	bucket_occupied++;
+	memcpy(((uint8_t *)*(dict->buckets + index)), &bucket_occupied, sizeof(uint8_t));
 	return 0;
 }
