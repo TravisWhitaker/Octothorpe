@@ -64,7 +64,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	 */
 	for(uint64_t i = 0; i < init_buckets; i++)
 	{
-		*(buckets_tmp + i) = calloc(init_tolerance, (2 * sizeof(uint8_t)) + cellen_tmp);
+		*(buckets_tmp + i) = calloc(1, (2 * sizeof(uint8_t)) + (cellen_tmp * init_tolerance));
 		if(*(buckets_tmp + i) == NULL)
 		{
 			DEBUG_MSG("calloc returned null while initializing bucket");
