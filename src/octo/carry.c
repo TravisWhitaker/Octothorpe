@@ -9,7 +9,7 @@
 #include <octo/carry.h>
 
 // Allocate memory for and initialize a carry_dict:
-octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint64_t init_buckets, uint8_t init_tolerance, uint8_t *init_master_key)
+octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t init_tolerance, const uint8_t *init_master_key)
 {
 	octo_dict_carry_t *output = malloc(sizeof(*output));
 
@@ -22,7 +22,7 @@ octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint6
 	}
 	output->keylen = init_keylen;
 	output->vallen = init_vallen;
-	size_t cellen_tmp = init_keylen + init_vallen;
+	const size_t cellen_tmp = init_keylen + init_vallen;
 	if(cellen_tmp < init_keylen)
 	{
 		DEBUG_MSG("size_t overflow, keylen + vallen is too large");
@@ -55,18 +55,29 @@ octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint6
 		free(buckets_tmp);
 		return NULL;
 	}
-	// This might be a terrible idea:
+	/*
+	 * Each bucket is a small heap block. This makes creating and deleting
+	 * carry_dicts slow and collision handling fast. Each bucket begins
+	 * with two unsigned integers(8-bit ints by default). The first is the
+	 * number of entries in the carry, the next is the current number of
+	 * entries that will fit in the carry:
+	 */
 	for(uint64_t i = 0; i < init_buckets; i++)
 	{
-		*(buckets_tmp + i) = calloc(init_tolerance, sizeof(uint8_t) + output->cellen);
+		*(buckets_tmp + i) = calloc(init_tolerance, (2 * sizeof(uint8_t)) + cellen_tmp);
 		if(*(buckets_tmp + i) == NULL)
 		{
 			DEBUG_MSG("calloc returned null while initializing bucket");
 			errno = ENOMEM;
-			free(output);
+			for(uint64_t j = 0; j < i; j++)
+			{
+				free(*(buckets_tmp + i));
+			}
 			free(buckets_tmp);
+			free(output);
 			return NULL;
 		}
+		*((uint8_t *)*(buckets_tmp + i) + 1)= init_tolerance;
 	}
 	output->bucket_count = init_buckets;
 	output->buckets = buckets_tmp;
@@ -83,6 +94,7 @@ void octo_carry_delete(octo_dict_carry_t *target)
 	{
 		free(*(target->buckets + i));
 	}
+	free(target->buckets);
 	free(target);
 	return;
 }
