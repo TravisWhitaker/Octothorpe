@@ -9,7 +9,7 @@
 #include <octo/carry.h>
 
 // Allocate memory for and initialize a carry_dict:
-octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint64_t init_buckets, uint8_t *init_master_key)
+octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint64_t init_buckets, uint8_t init_tolerance, uint8_t *init_master_key)
 {
 	octo_dict_carry_t *output = malloc(sizeof(*output));
 
@@ -47,10 +47,18 @@ octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint6
 		free(output);
 		return NULL;
 	}
+	if(init_tolerance <= 0)
+	{
+		DEBUG_MSG("init_tolerance must not be zero");
+		errno = EINVAL;
+		free(output);
+		free(buckets_tmp);
+		return NULL;
+	}
 	// This might be a terrible idea:
 	for(uint64_t i = 0; i < init_buckets; i++)
 	{
-		*(buckets_tmp + i) = calloc(1, sizeof(uint8_t) + output->cellen);
+		*(buckets_tmp + i) = calloc(init_tolerance, sizeof(uint8_t) + output->cellen);
 		if(*(buckets_tmp + i) == NULL)
 		{
 			DEBUG_MSG("calloc returned null while initializing bucket");
@@ -67,4 +75,14 @@ octo_dict_carry_t *octo_carry_init(size_t init_keylen, size_t init_vallen, uint6
 		output->master_key[i] = init_master_key[i];
 	}
 	return output;
+}
+
+void octo_carry_delete(octo_dict_carry_t *target)
+{
+	for(uint64_t i = 0; i < target->bucket_count; i++)
+	{
+		free(*(target->buckets + i));
+	}
+	free(target);
+	return;
 }

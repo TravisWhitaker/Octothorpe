@@ -20,6 +20,7 @@ typedef struct
 	void **buckets;
 } octo_dict_carry_t;
 
-octo_dict_carry_t *octo_carry_init(size_t keylen, size_t vallen, uint64_t init_buckets, uint8_t *master_key);
+octo_dict_carry_t *octo_carry_init(size_t keylen, size_t vallen, uint64_t init_buckets, uint8_t init_tolerance, uint8_t *master_key);
+void octo_carry_delete(octo_dict_t *target);
 
 #endif
