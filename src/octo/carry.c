@@ -12,15 +12,26 @@
 // Allocate memory for and initialize a carry_dict:
 octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t init_tolerance, const uint8_t *init_master_key)
 {
-	octo_dict_carry_t *output = malloc(sizeof(*output));
-
 	if(init_keylen <= 0)
 	{
 		DEBUG_MSG("key length must not be zero");
 		errno = EINVAL;
-		free(output);
 		return NULL;
 	}
+	if(init_buckets <= 0)
+	{
+		DEBUG_MSG("init_buckets must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+	if(init_tolerance <= 0)
+	{
+		DEBUG_MSG("init_tolerance must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+
+	octo_dict_carry_t *output = malloc(sizeof(*output));
 	output->keylen = init_keylen;
 	output->vallen = init_vallen;
 	const size_t cellen_tmp = init_keylen + init_vallen;
@@ -33,13 +44,6 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	}
 	output->cellen = cellen_tmp;
 
-	if(init_buckets <= 0)
-	{
-		DEBUG_MSG("init_buckets must not be zero");
-		errno = EINVAL;
-		free(output);
-		return NULL;
-	}
 	void **buckets_tmp = malloc(sizeof(*buckets_tmp) * init_buckets);
 	if(buckets_tmp == NULL)
 	{
@@ -48,37 +52,30 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 		free(output);
 		return NULL;
 	}
-	if(init_tolerance <= 0)
-	{
-		DEBUG_MSG("init_tolerance must not be zero");
-		errno = EINVAL;
-		free(output);
-		free(buckets_tmp);
-		return NULL;
-	}
 	/*
 	 * Each bucket is a small heap block. This makes creating and deleting
 	 * carry_dicts slow and collision handling fast. Each bucket begins
 	 * with two unsigned integers(8-bit ints by default). The first is the
-	 * number of entries in the carry, the next is the current number of
-	 * entries that will fit in the carry:
+	 * number of entries in the bucket, the next is the current number of
+	 * entries that will fit in the bucket:
 	 */
 	for(uint64_t i = 0; i < init_buckets; i++)
 	{
-		*(buckets_tmp + i) = calloc(1, (2 * sizeof(uint8_t)) + (cellen_tmp * init_tolerance));
+		*(buckets_tmp + i) = malloc((2 * sizeof(uint8_t)) + (cellen_tmp * init_tolerance));
 		if(*(buckets_tmp + i) == NULL)
 		{
-			DEBUG_MSG("calloc returned null while initializing bucket");
+			DEBUG_MSG("malloc returned null while initializing bucket");
 			errno = ENOMEM;
 			for(uint64_t j = 0; j < i; j++)
 			{
-				free(*(buckets_tmp + i));
+				free(*(buckets_tmp + j));
 			}
 			free(buckets_tmp);
 			free(output);
 			return NULL;
 		}
-		*((uint8_t *)*(buckets_tmp + i) + 1)= init_tolerance;
+		*((uint8_t *)*(buckets_tmp + i)) = 0;
+		*((uint8_t *)*(buckets_tmp + i) + 1) = init_tolerance;
 	}
 	output->bucket_count = init_buckets;
 	output->buckets = buckets_tmp;
