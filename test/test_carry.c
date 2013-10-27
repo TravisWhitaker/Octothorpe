@@ -30,6 +30,11 @@ int main()
 			return 1;
 		}
 	}
+	if(octo_carry_insert("abcdefg\0", "123456781234567812345678123456781234567812345678123456781234567\0", (const octo_dict_carry_t *)test_carry) > 0)
+	{
+		printf("test_carry: FAILED: octo_carry_insert returned error code\n");
+		return 1;
+	}
 	octo_carry_delete(test_carry);
 	printf("test_carry: SUCCESS!\n");
 	return 0;

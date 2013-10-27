@@ -2,11 +2,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <errno.h>
 
 #include <octo/types.h>
 #include <octo/debug.h>
+#include <octo/hash.h>
 #include <octo/carry.h>
 
 // Allocate memory for and initialize a carry_dict:
@@ -86,6 +88,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	return output;
 }
 
+// Delete a carry_dict:
 void octo_carry_delete(octo_dict_carry_t *target)
 {
 	for(uint64_t i = 0; i < target->bucket_count; i++)
@@ -95,4 +98,30 @@ void octo_carry_delete(octo_dict_carry_t *target)
 	free(target->buckets);
 	free(target);
 	return;
+}
+
+int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	uint8_t bucket_occupied;
+	uint8_t bucket_available;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+	bucket_occupied = *((uint8_t *)*(dict->buckets + index));
+	bucket_available = *((uint8_t *)*(dict->buckets + index) + 1);
+	if(bucket_available == bucket_occupied)
+	{
+		void *bigger_bucket = realloc(*(dict->buckets + index),(2 * sizeof(uint8_t)) + (dict->cellen * (bucket_available + 1)));
+		if(bigger_bucket == NULL)
+		{
+			DEBUG_MSG("bucket realloc failed during insertion");
+			errno = ENOMEM;
+			return 1;
+		}
+		*(dict->buckets + index) = bigger_bucket;
+	}
+	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied),key,dict->keylen);
+	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied) + dict->keylen, value, dict->vallen);
+	return 0;
 }

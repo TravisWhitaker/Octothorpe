@@ -31,6 +31,7 @@ do { \
 	stat_2 += stat_1; stat_1=rotate_left(stat_1, 17); stat_1 ^= stat_2; stat_2=rotate_left(stat_2, 32); \
 } while(0)
 
+// Given an arbitrary number input_length of bytes *input, give a 64-bit hash *output:
 void octo_hash(const unsigned char *input, unsigned long int input_length, unsigned char *output, const unsigned char *key)
 {
 	uint64_t stat_0 = 0x736f6d6570736575ULL;
