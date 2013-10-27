@@ -100,6 +100,7 @@ void octo_carry_delete(octo_dict_carry_t *target)
 	return;
 }
 
+// Insert a value into a carry_dict. Return 0 on success:
 int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
@@ -153,4 +154,35 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 	bucket_occupied++;
 	memcpy(((uint8_t *)*(dict->buckets + index)), &bucket_occupied, sizeof(uint8_t));
 	return 0;
+}
+
+// Fetch a value from a carry_dict. Return NULL on error, return a pointer to
+// the carry_dict itself if the value is not found:
+void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+	// If there's nothing in the bucket, the value isn't in the dict:
+	if(*((uint8_t *)*(dict->buckets + index)) == 0)
+	{
+		return (void *)dict;
+	}
+	for(uint8_t i = 0; i < *((uint8_t *)*(dict->buckets + index)); i++)
+	{
+		if(memcmp(key, (uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i), dict->keylen) == 0)
+		{
+			void *output = malloc(dict->vallen);
+			if(output == NULL)
+			{
+				DEBUG_MSG("lookup successful but malloc failed");
+				errno = ENOMEM;
+				return NULL;
+			}
+			memcpy(output, (uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i) + dict->keylen, dict->vallen);
+			return output;
+		}
+	}
+	return (void *)dict;
 }

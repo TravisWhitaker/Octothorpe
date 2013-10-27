@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <errno.h>
 
@@ -11,7 +12,8 @@
 int main()
 {
 	uint8_t init_master_key[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f'};
-	octo_dict_carry_t *test_carry = octo_carry_init(8, 64, 10000000, 2,init_master_key);
+	printf("test_carry: Creating test carry_dict...\n");
+	octo_dict_carry_t *test_carry = octo_carry_init(8, 64, 10000000, 2, init_master_key);
 	if(test_carry == NULL)
 	{
 		printf("test_carry: FAILED: octo_carry_init returned NULL\n");
@@ -30,11 +32,43 @@ int main()
 			return 1;
 		}
 	}
+	printf("test_carry: Doing test insert...\n");
 	if(octo_carry_insert("abcdefg\0", "123456781234567812345678123456781234567812345678123456781234567\0", (const octo_dict_carry_t *)test_carry) > 0)
 	{
 		printf("test_carry: FAILED: octo_carry_insert returned error code\n");
 		return 1;
 	}
+	printf("test_carry: Fetching inserted record...\n");
+	void *output = octo_carry_fetch("abcdefg\0", (const octo_dict_carry_t *)test_carry);
+	if(output == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned NULL\n");
+		return 1;
+	}
+	if(output == (void *)test_carry)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Checking for correct value...\n");
+	if(memcmp("123456781234567812345678123456781234567812345678123456781234567\0", output, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value\n");
+		return 1;
+	}
+	printf("test_carry: Looking up non-existant key...\n");
+	output = octo_carry_fetch("zxcvbde\n", (const octo_dict_carry_t *)test_carry);
+	if(output == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned NULL\n");
+		return 1;
+	}
+	if(output != (void *)test_carry)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch reported hit for non-existant key\n");
+		return 1;
+	}
+	printf("test_carry: Deleting carry_dict...\n");
 	octo_carry_delete(test_carry);
 	printf("test_carry: SUCCESS!\n");
 	return 0;
