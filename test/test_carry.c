@@ -56,7 +56,7 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value\n");
 		return 1;
 	}
-	printf("test_carry: Looking up non-existant key...\n");
+	printf("test_carry: Looking up non-existent key...\n");
 	output = octo_carry_fetch("zxcvbde\n", (const octo_dict_carry_t *)test_carry);
 	if(output == NULL)
 	{
@@ -65,7 +65,7 @@ int main()
 	}
 	if(output != (void *)test_carry)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch reported hit for non-existant key\n");
+		printf("test_carry: FAILED: octo_carry_fetch reported hit for non-existent key\n");
 		return 1;
 	}
 	printf("test_carry: Deleting carry_dict...\n");
