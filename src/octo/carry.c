@@ -187,7 +187,7 @@ void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
 	return (void *)dict;
 }
 
-// Like octo_carry_fetch, but only test for the value.
+// Like octo_carry_fetch, but don't malloc/memcpy the value.
 // Return 1 if found, 0 if not:
 int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 {
