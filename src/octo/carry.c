@@ -186,3 +186,26 @@ void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
 	}
 	return (void *)dict;
 }
+
+// Like octo_carry_fetch, but only test for the value.
+// Return 1 if found, 0 if not:
+int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+	// If there's nothing in the bucket, the value isn't in the dict:
+	if(*((uint8_t *)*(dict->buckets + index)) == 0)
+	{
+		return 0;
+	}
+	for(uint8_t i = 0; i < *((uint8_t *)*(dict->buckets + index)); i++)
+	{
+		if(memcmp(key, (uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i), dict->keylen) == 0)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}

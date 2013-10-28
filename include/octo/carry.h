@@ -17,5 +17,6 @@ octo_dict_carry_t *octo_carry_init(const size_t keylen, const size_t vallen, con
 void octo_carry_delete(octo_dict_carry_t *target);
 int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_t *dict);
 void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict);
+int octo_carry_poke(const void *key, const octo_dict_carry_t *dict);
 
 #endif

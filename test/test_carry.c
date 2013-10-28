@@ -38,6 +38,18 @@ int main()
 		printf("test_carry: FAILED: octo_carry_insert returned error code\n");
 		return 1;
 	}
+	printf("test_carry: Poking inserted record...\n");
+	if(!(octo_carry_poke("abcdefg\0", (const octo_dict_carry_t *)test_carry)))
+	{
+		printf("test_carry: FAILED: octo_carry_poke couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Poking non-existent record...\n");
+	if(octo_carry_poke("zfeuids\n", (const octo_dict_carry_t *)test_carry))
+	{
+		printf("test_carry: FAILED: octo_carry_poke found non-existent key\n");
+		return 1;
+	}
 	printf("test_carry: Fetching inserted record...\n");
 	void *output = octo_carry_fetch("abcdefg\0", (const octo_dict_carry_t *)test_carry);
 	if(output == NULL)
@@ -56,6 +68,7 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value\n");
 		return 1;
 	}
+	free(output);
 	printf("test_carry: Looking up non-existent key...\n");
 	output = octo_carry_fetch("zxcvbde\n", (const octo_dict_carry_t *)test_carry);
 	if(output == NULL)
