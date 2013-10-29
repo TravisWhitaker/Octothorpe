@@ -84,6 +84,49 @@ int main()
 	printf("test_carry: Rehashing dict...\n");
 	uint8_t new_master_key[16] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'g', 'h', 'i', 'j', 'k', 'l'};
 	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, (test_carry->bucket_count - 10000), 1, new_master_key);
+	printf("test_carry: Poking inserted record...\n");
+	if(!(octo_carry_poke("abcdefg\0", (const octo_dict_carry_t *)test_carry)))
+	{
+		printf("test_carry: FAILED: octo_carry_poke couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Poking non-existent record...\n");
+	if(octo_carry_poke("zfeuids\n", (const octo_dict_carry_t *)test_carry))
+	{
+		printf("test_carry: FAILED: octo_carry_poke found non-existent key\n");
+		return 1;
+	}
+	printf("test_carry: Fetching inserted record...\n");
+	output = octo_carry_fetch("abcdefg\0", (const octo_dict_carry_t *)test_carry);
+	if(output == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned NULL\n");
+		return 1;
+	}
+	if(output == (void *)test_carry)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Checking for correct value...\n");
+	if(memcmp("123456781234567812345678123456781234567812345678123456781234567\0", output, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value\n");
+		return 1;
+	}
+	free(output);
+	printf("test_carry: Looking up non-existent key...\n");
+	output = octo_carry_fetch("zxcvbde\n", (const octo_dict_carry_t *)test_carry);
+	if(output == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned NULL\n");
+		return 1;
+	}
+	if(output != (void *)test_carry)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch reported hit for non-existent key\n");
+		return 1;
+	}
 	if(test_carry == NULL)
 	{
 		printf("test_carry: FAILED: octo_carry_rehash returned null\n");
