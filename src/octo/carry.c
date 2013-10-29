@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include <errno.h>
@@ -81,10 +82,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	}
 	output->bucket_count = init_buckets;
 	output->buckets = buckets_tmp;
-	for(unsigned int i = 0; i < 16; i++)
-	{
-		output->master_key[i] = init_master_key[i];
-	}
+	memcpy(output->master_key, init_master_key, 16);
 	return output;
 }
 
@@ -209,3 +207,105 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 	}
 	return 0;
 }
+
+// Re-create the carry_dict with a new key length, value length(both will be truncated), number of buckets,
+// tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
+octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const size new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
+{
+	if(new_keylen <= 0)
+	{
+		DEBUG_MSG("key length must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+	if(new_buckets <= 0)
+	{
+		DEBUG_MSG("init_buckets must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+	if(new_tolerance <= 0)
+	{
+		DEBUG_MSG("init_tolerance must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+
+	octo_dict_carry_t *output = malloc(sizeof(*output));
+	output->keylen = new_keylen;
+	output->vallen = new_vallen;
+	const size_t new_cellen = new_keylen + new_vallen;
+	if(new_cellen < new_keylen)
+	{
+		DEBUG_MSG("size_t overflow, keylen + vallen is too large");
+		errno = EDOM;
+		free(output);
+		return NULL;
+	}
+	output->cellen = new_cellen;
+	output->bucket_count = new_buckets;
+	memcpy(output->master_key, new_master_key, 16);
+	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	uint64_t hash;
+	uint64_t index;
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
+		{
+			octo_hash((const unsigned char *)((uint8_t *)*((dict->buckets + i) + 2 + (dict->cellen * j))), (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
+			index = hash % output->bucket_count;
+			if(*(output->buckets + index) == NULL)
+			{
+				*(output->buckets + index) = malloc((2 * sizeof(uint8_t)) + (output->cellen * new_tolerance));
+				if(*(output->buckets + index) == NULL)
+				{
+					DEBUG_MSG("malloc failed while allocating new bucket");
+					errno = ENOMEM;
+					octo_carry_delete(output);
+					return NULL;
+				}
+				*((uint8_t *)*(output->buckets + index)) = 1;
+				*((uint8_t *)*(output->buckets + index) + 1) = new_tolerance;
+				memcpy(((uint8_t *)*(output->buckets + index) + 2), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
+				memcpy(((uint8_t *)*(output->buckets + index) + 2 + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
+			}
+			else
+			{
+				bool found = false;
+				for(uint8_t k = 0; k < *((uint8_t *)*(output->buckets + index)); k++)
+				{
+					if(memcmp(((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), ((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k)), output->keylen) == 0)
+					{
+						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen));
+						*((uint8_t *)*(output->buckets + index))++;
+						found = true;
+						break;
+					}
+				}
+				if(found == false)
+				{
+					if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
+					{
+						*(output->buckets + index) = realloc(*(output->buckets + index), (2 * sizeof(uint8_t)) + *((uint8_t *)*(output->buckets + index) + 1) + 1);
+						if(*(output->buckets + index) == NULL)
+						{
+							DEBUG_MSG("realloc failed during rehash");
+							errno = ENOMEM;
+							free(output);
+							return NULL;
+						}
+						*((uint8_t *)*(output->buckets + index) + 1)++;
+					}
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)))), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index))) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
+					*((uint8_t *)*(output->buckets + index))++;
+				}
+
