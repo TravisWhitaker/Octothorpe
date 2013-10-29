@@ -250,6 +250,11 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	output->cellen = new_cellen;
 	output->bucket_count = new_buckets;
 	memcpy(output->master_key, new_master_key, 16);
+	// If the new keylen/vallen is longer than the old one, we need to read if from an initialized buffer:
+	void *key_buffer = malloc(output->keylen);
+	void *val_buffer = malloc(output->vallen);
+	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
+	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
 
 	// Allocate the new array of bucket pointers, initializing them to NULL:
 	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
@@ -267,7 +272,11 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	{
 		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
 		{
-			octo_hash((const unsigned char *)((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
+			memset(key_buffer, '\0', output->keylen);
+			memset(val_buffer, '\0', output->vallen);
+			memcpy(key_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), buffer_keylen);
+			memcpy(val_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), buffer_vallen);
+			octo_hash((const unsigned char *)key_buffer, (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
 			index = hash % output->bucket_count;
 			// If there isn't a bucket at this position yet, alloc and insert:
 			if(*(output->buckets + index) == NULL)
@@ -282,8 +291,8 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 				}
 				*((uint8_t *)*(output->buckets + index)) = 1;
 				*((uint8_t *)*(output->buckets + index) + 1) = new_tolerance;
-				memcpy(((uint8_t *)*(output->buckets + index) + 2), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
-				memcpy(((uint8_t *)*(output->buckets + index) + 2 + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
+				memcpy(((uint8_t *)*(output->buckets + index) + 2), key_buffer, output->keylen);
+				memcpy(((uint8_t *)*(output->buckets + index) + 2 + output->keylen), val_buffer, output->vallen);
 			}
 			// Collision:
 			else
@@ -292,9 +301,9 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 				// Search for the key(considering new key length) in the bucket:
 				for(uint8_t k = 0; k < *((uint8_t *)*(output->buckets + index)); k++)
 				{
-					if(memcmp(((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), ((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k)), output->keylen) == 0)
+					if(memcmp(key_buffer, ((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k)), output->keylen) == 0)
 					{
-						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
+						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), val_buffer, output->vallen);
 						*((uint8_t *)*(output->buckets + index)) += 1;
 						found = true;
 						break;
@@ -317,8 +326,8 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 						*((uint8_t *)*(output->buckets + index) + 1) += 1;
 					}
 					// Insert at the end of the bucket:
-					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)))), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
-					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)) + output->keylen)) + output->keylen, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * (*((uint8_t *)*(output->buckets + index))))), key_buffer, output->keylen);
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * (*((uint8_t *)*(output->buckets + index))) + output->keylen)) + output->keylen, val_buffer, output->vallen);
 					*((uint8_t *)*(output->buckets + index)) += 1;
 				}
 			}
@@ -335,7 +344,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 			*(output->buckets + i) = malloc((2 * sizeof(uint8_t)) + (output->cellen * new_tolerance));
 			if(*(output->buckets + i) == NULL)
 			{
-				DEBUG_MSG("malloc failed while finalizing new carry_dict; data is unrecoverable");
+				DEBUG_MSG("malloc failed while finalizing new carry_dict; lazy rehash was used, data is unrecoverable");
 				errno = ENOMEM;
 				octo_carry_delete(output);
 				return NULL;
