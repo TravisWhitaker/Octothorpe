@@ -213,7 +213,7 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 
 // Re-create the carry_dict with a new key length, value length(both will be truncated), number of buckets,
 // tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
-octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const size_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
+octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
 	if(new_keylen <= 0)
@@ -267,7 +267,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	{
 		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
 		{
-			octo_hash((const unsigned char *)((uint8_t *)*((dict->buckets + i) + 2 + (dict->cellen * j))), (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
+			octo_hash((const unsigned char *)((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
 			index = hash % output->bucket_count;
 			// If there isn't a bucket at this position yet, alloc and insert:
 			if(*(output->buckets + index) == NULL)
