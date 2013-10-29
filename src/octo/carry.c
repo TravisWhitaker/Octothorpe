@@ -15,6 +15,7 @@
 // Allocate memory for and initialize a carry_dict:
 octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t init_tolerance, const uint8_t *init_master_key)
 {
+	// Make sure the arguments are valid:
 	if(init_keylen <= 0)
 	{
 		DEBUG_MSG("key length must not be zero");
@@ -34,6 +35,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 		return NULL;
 	}
 
+	// Allocate the new dict and populate the trivial fields:
 	octo_dict_carry_t *output = malloc(sizeof(*output));
 	output->keylen = init_keylen;
 	output->vallen = init_vallen;
@@ -47,6 +49,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	}
 	output->cellen = cellen_tmp;
 
+	// Allocate the array of bucket pointers:
 	void **buckets_tmp = malloc(sizeof(*buckets_tmp) * init_buckets);
 	if(buckets_tmp == NULL)
 	{
@@ -212,6 +215,7 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 // tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
 octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const size new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
+	// Make sure the arguments are valid:
 	if(new_keylen <= 0)
 	{
 		DEBUG_MSG("key length must not be zero");
@@ -231,6 +235,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 		return NULL;
 	}
 
+	// Allocate the new dict and populate trivial fields:
 	octo_dict_carry_t *output = malloc(sizeof(*output));
 	output->keylen = new_keylen;
 	output->vallen = new_vallen;
@@ -245,6 +250,8 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	output->cellen = new_cellen;
 	output->bucket_count = new_buckets;
 	memcpy(output->master_key, new_master_key, 16);
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
 	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
 	if(buckets_tmp == NULL)
 	{
@@ -262,6 +269,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 		{
 			octo_hash((const unsigned char *)((uint8_t *)*((dict->buckets + i) + 2 + (dict->cellen * j))), (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
 			index = hash % output->bucket_count;
+			// If there isn't a bucket at this position yet, alloc and insert:
 			if(*(output->buckets + index) == NULL)
 			{
 				*(output->buckets + index) = malloc((2 * sizeof(uint8_t)) + (output->cellen * new_tolerance));
@@ -277,14 +285,16 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 				memcpy(((uint8_t *)*(output->buckets + index) + 2), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
 				memcpy(((uint8_t *)*(output->buckets + index) + 2 + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
 			}
+			// Collision:
 			else
 			{
 				bool found = false;
+				// Search for the key(considering new key length) in the bucket:
 				for(uint8_t k = 0; k < *((uint8_t *)*(output->buckets + index)); k++)
 				{
 					if(memcmp(((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), ((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k)), output->keylen) == 0)
 					{
-						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen));
+						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
 						*((uint8_t *)*(output->buckets + index))++;
 						found = true;
 						break;
@@ -292,20 +302,47 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 				}
 				if(found == false)
 				{
+					// If the bucket is at capacit, expand it:
 					if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
 					{
-						*(output->buckets + index) = realloc(*(output->buckets + index), (2 * sizeof(uint8_t)) + *((uint8_t *)*(output->buckets + index) + 1) + 1);
-						if(*(output->buckets + index) == NULL)
+						void *bigger_bucket = realloc(*(output->buckets + index), (2 * sizeof(uint8_t)) + *((uint8_t *)*(output->buckets + index) + 1) + 1);
+						if(bigger_bucket == NULL)
 						{
 							DEBUG_MSG("realloc failed during rehash");
 							errno = ENOMEM;
-							free(output);
+							octo_carry_delete(output);
 							return NULL;
 						}
+						*(output->buckets + index) = bigger_bucket;
 						*((uint8_t *)*(output->buckets + index) + 1)++;
 					}
+					// Insert at the end of the bucket:
 					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)))), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
-					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index))) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)) + output->keylen)) + output->keylen, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
 					*((uint8_t *)*(output->buckets + index))++;
 				}
-
+			}
+		}
+		free(*(dict->buckets + i));
+	}
+	// At this point we're finished with the old dict, free it:
+	free(dict);
+	// Now allocate buckets for the remaining NULL pointers:
+	for(uint64_t i = 0; i < output->bucket_count; i++)
+	{
+		if(*(output->buckets + i) == NULL)
+		{
+			*(output->buckets + i) = malloc((2 * sizeof(uint8_t)) + (output->cellen * new_tolerance));
+			if(*(output->buckets + i) == NULL)
+			{
+				DEBUG_MSG("malloc failed while finalizing new carry_dict; data is unrecoverable");
+				errno = ENOMEM;
+				octo_carry_delete(output);
+				return NULL;
+			}
+			*((uint8_t *)*(output->buckets + i)) = 0;
+			*((uint8_t *)*(output->buckets + i) + 1) = new_tolerance;
+		}
+	}
+	return output;
+}
