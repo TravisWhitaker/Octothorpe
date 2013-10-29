@@ -213,7 +213,7 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 
 // Re-create the carry_dict with a new key length, value length(both will be truncated), number of buckets,
 // tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
-octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const size new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
+octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const size_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
 	if(new_keylen <= 0)
@@ -295,7 +295,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 					if(memcmp(((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), ((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k)), output->keylen) == 0)
 					{
 						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
-						*((uint8_t *)*(output->buckets + index))++;
+						*((uint8_t *)*(output->buckets + index)) += 1;
 						found = true;
 						break;
 					}
@@ -314,12 +314,12 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 							return NULL;
 						}
 						*(output->buckets + index) = bigger_bucket;
-						*((uint8_t *)*(output->buckets + index) + 1)++;
+						*((uint8_t *)*(output->buckets + index) + 1) += 1;
 					}
 					// Insert at the end of the bucket:
 					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)))), ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), output->keylen);
 					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * *((uint8_t *)*(output->buckets + index)) + output->keylen)) + output->keylen, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), output->vallen);
-					*((uint8_t *)*(output->buckets + index))++;
+					*((uint8_t *)*(output->buckets + index)) += 1;
 				}
 			}
 		}

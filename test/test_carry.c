@@ -81,6 +81,14 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch reported hit for non-existent key\n");
 		return 1;
 	}
+	printf("test_carry: Rehashing dict...\n");
+	uint8_t new_master_key[16] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'g', 'h', 'i', 'j', 'k', 'l'};
+	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, (test_carry->bucket_count - 10000), 1, new_master_key);
+	if(test_carry == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_rehash returned null\n");
+		return 1;
+	}
 	printf("test_carry: Deleting carry_dict...\n");
 	octo_carry_delete(test_carry);
 	printf("test_carry: SUCCESS!\n");
