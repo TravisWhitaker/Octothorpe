@@ -101,31 +101,26 @@ void octo_carry_delete(octo_dict_carry_t *target)
 	return;
 }
 
-// Insert a value into a carry_dict. Return 0 on success:
+// Insert a value into a carry_dict. Return 0 on success, 1 on malloc failure, 2 on unmanageable collision  :
 int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	uint8_t bucket_occupied;
-	uint8_t bucket_available;
 
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
-	bucket_occupied = *((uint8_t *)*(dict->buckets + index));
-	bucket_available = *((uint8_t *)*(dict->buckets + index) + 1);
 
 	// If there's nothing in the bucket yet, insert the record:
-	if(bucket_occupied == 0)
+	if(*((uint8_t *)*(dict->buckets + index)) == 0)
 	{
 		memcpy((uint8_t *)*(dict->buckets + index) + 2, key, dict->keylen);
 		memcpy((uint8_t *)*(dict->buckets + index) + 2 + dict->keylen, value, dict->vallen);
-		bucket_occupied++;
-		memcpy(((uint8_t *)*(dict->buckets + index)), &bucket_occupied, sizeof(uint8_t));
+		*((uint8_t *)*(dict->buckets + index)) += 1;
 		return 0;
 	}
 
 	// Check to see if the key is already in the bucket:
-	for(uint8_t i = 0; i < bucket_occupied; i++)
+	for(uint8_t i = 0; i < *((uint8_t *)*(dict->buckets + index)); i++)
 	{
 		if(memcmp(key, (uint8_t *)*(dict->buckets + index) + 2 + (i * dict->cellen), dict->keylen) == 0)
 		{
@@ -135,9 +130,14 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 	}
 
 	// If the bucket is at capacity, expand it:
-	if(bucket_available == bucket_occupied)
+	if(*((uint8_t *)*(dict->buckets + index) + 1) == *((uint8_t *)*(dict->buckets + index)))
 	{
-		void *bigger_bucket = realloc(*(dict->buckets + index),(2 * sizeof(uint8_t)) + (dict->cellen * (bucket_available + 1)));
+		// ...but not if *((uint8_t *)*(dict->buckets + index) + 1) would overflow:
+		if(*((uint8_t *)*(dict->buckets + index) + 1) == 255)
+		{
+			return 2;
+		}
+		void *bigger_bucket = realloc(*(dict->buckets + index),(2 * sizeof(uint8_t)) + (dict->cellen * (*((uint8_t *)*(dict->buckets + index) + 1) + 1)));
 		if(bigger_bucket == NULL)
 		{
 			DEBUG_MSG("bucket realloc failed during insertion");
@@ -145,15 +145,13 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 			return 1;
 		}
 		*(dict->buckets + index) = bigger_bucket;
-		bucket_available++;
-		memcpy(((uint8_t *)*(dict->buckets + index) + 1), &bucket_available, sizeof(uint8_t));
+		*((uint8_t *)*(dict->buckets + index) + 1) += 1;
 	}
 
 	// Insert the record at the end of the bucket:
-	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied), key, dict->keylen);
-	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * bucket_occupied) + dict->keylen, value, dict->vallen);
-	bucket_occupied++;
-	memcpy(((uint8_t *)*(dict->buckets + index)), &bucket_occupied, sizeof(uint8_t));
+	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * (*((uint8_t *)*(dict->buckets + index)))), key, dict->keylen);
+	memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * (*((uint8_t *)*(dict->buckets + index)))) + dict->keylen, value, dict->vallen);
+	*((uint8_t *)*(dict->buckets + index)) += 1;
 	return 0;
 }
 
