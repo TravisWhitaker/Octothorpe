@@ -260,6 +260,8 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
+	memset(key_buffer, '\0', output->keylen);
+	memset(val_buffer, '\0', output->vallen);
 
 	// Allocate the new array of bucket pointers, initializing them to NULL:
 	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
@@ -277,8 +279,6 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	{
 		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
 		{
-			memset(key_buffer, '\0', output->keylen);
-			memset(val_buffer, '\0', output->vallen);
 			memcpy(key_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), buffer_keylen);
 			memcpy(val_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), buffer_vallen);
 			octo_hash((const unsigned char *)key_buffer, (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
@@ -425,6 +425,8 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
+	memset(key_buffer, '\0', output->keylen);
+	memset(val_buffer, '\0', output->vallen);
 
 	// Allocate the new array of bucket pointers, initializing them to NULL:
 	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
@@ -442,8 +444,6 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	{
 		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
 		{
-			memset(key_buffer, '\0', output->keylen);
-			memset(val_buffer, '\0', output->vallen);
 			memcpy(key_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), buffer_keylen);
 			memcpy(val_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), buffer_vallen);
 			octo_hash((const unsigned char *)key_buffer, (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
