@@ -59,8 +59,7 @@ carry.o: src/octo/carry.c
 
 .PHONY: test
 test:
-	$(CC) $(CFLAGS) $(INCLUDE) test/test_carry.c -o test_carry.test -L./ -locto
-	./test_carry.test
+	make -C test
 
 .PHONY: check
 check: test
