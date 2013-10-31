@@ -83,7 +83,7 @@ int main()
 	}
 	printf("test_carry: Rehashing dict...\n");
 	uint8_t new_master_key[16] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'g', 'h', 'i', 'j', 'k', 'l'};
-	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, 100, 1, new_master_key);
+	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, 10, 1, new_master_key);
 	printf("test_carry: Poking inserted record...\n");
 	if(!(octo_carry_poke("abcdefg\0", (const octo_dict_carry_t *)test_carry)))
 	{

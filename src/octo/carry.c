@@ -251,6 +251,13 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	// If the new keylen/vallen is longer than the old one, we need to read if from an initialized buffer:
 	void *key_buffer = malloc(output->keylen);
 	void *val_buffer = malloc(output->vallen);
+	if(key_buffer == NULL || val_buffer == NULL)
+	{
+		DEBUG_MSG("malloc failed while allocating key/val buffer");
+		errno = ENOMEM;
+		octo_carry_delete(output);
+		return NULL;
+	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
 
@@ -309,15 +316,25 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 				}
 				if(found == false)
 				{
-					// If the bucket is at capacit, expand it:
+					// If the bucket is at capacity, expand it:
 					if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
 					{
+						if(*((uint8_t *)*(output->buckets + index)) == 255)
+						{
+							DEBUG_MSG("unmanageable collision");
+							octo_carry_delete(output);
+							free(key_buffer);
+							free(val_buffer);
+							return NULL;
+						}
 						void *bigger_bucket = realloc(*(output->buckets + index), (2 * sizeof(uint8_t)) + *((uint8_t *)*(output->buckets + index) + 1) + 1);
 						if(bigger_bucket == NULL)
 						{
 							DEBUG_MSG("realloc failed during rehash");
 							errno = ENOMEM;
 							octo_carry_delete(output);
+							free(key_buffer);
+							free(val_buffer);
 							return NULL;
 						}
 						*(output->buckets + index) = bigger_bucket;
@@ -333,7 +350,10 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 		free(*(dict->buckets + i));
 	}
 	// At this point we're finished with the old dict, free it:
+	free(dict->buckets);
 	free(dict);
+	free(key_buffer);
+	free(val_buffer);
 	// Now allocate buckets for the remaining NULL pointers:
 	for(uint64_t i = 0; i < output->bucket_count; i++)
 	{
