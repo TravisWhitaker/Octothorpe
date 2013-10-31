@@ -373,3 +373,165 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	}
 	return output;
 }
+
+// Like octo_carry_rehash, but retain the original dict. It is up to the caller
+// to free the old dict:
+octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
+{
+	// Make sure the arguments are valid:
+	if(new_keylen <= 0)
+	{
+		DEBUG_MSG("key length must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+	if(new_buckets <= 0)
+	{
+		DEBUG_MSG("init_buckets must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+	if(new_tolerance <= 0)
+	{
+		DEBUG_MSG("init_tolerance must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+
+	// Allocate the new dict and populate trivial fields:
+	octo_dict_carry_t *output = malloc(sizeof(*output));
+	output->keylen = new_keylen;
+	output->vallen = new_vallen;
+	const size_t new_cellen = new_keylen + new_vallen;
+	if(new_cellen < new_keylen)
+	{
+		DEBUG_MSG("size_t overflow, keylen + vallen is too large");
+		errno = EDOM;
+		free(output);
+		return NULL;
+	}
+	output->cellen = new_cellen;
+	output->bucket_count = new_buckets;
+	memcpy(output->master_key, new_master_key, 16);
+	// If the new keylen/vallen is longer than the old one, we need to read if from an initialized buffer:
+	void *key_buffer = malloc(output->keylen);
+	void *val_buffer = malloc(output->vallen);
+	if(key_buffer == NULL || val_buffer == NULL)
+	{
+		DEBUG_MSG("malloc failed while allocating key/val buffer");
+		errno = ENOMEM;
+		octo_carry_delete(output);
+		return NULL;
+	}
+	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
+	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
+	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	uint64_t hash;
+	uint64_t index;
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
+		{
+			memset(key_buffer, '\0', output->keylen);
+			memset(val_buffer, '\0', output->vallen);
+			memcpy(key_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), buffer_keylen);
+			memcpy(val_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), buffer_vallen);
+			octo_hash((const unsigned char *)key_buffer, (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
+			index = hash % output->bucket_count;
+			// If there isn't a bucket at this position yet, alloc and insert:
+			if(*(output->buckets + index) == NULL)
+			{
+				*(output->buckets + index) = malloc((2 * sizeof(uint8_t)) + (output->cellen * new_tolerance));
+				if(*(output->buckets + index) == NULL)
+				{
+					DEBUG_MSG("malloc failed while allocating new bucket");
+					errno = ENOMEM;
+					octo_carry_delete(output);
+					return NULL;
+				}
+				*((uint8_t *)*(output->buckets + index)) = 1;
+				*((uint8_t *)*(output->buckets + index) + 1) = new_tolerance;
+				memcpy(((uint8_t *)*(output->buckets + index) + 2), key_buffer, output->keylen);
+				memcpy(((uint8_t *)*(output->buckets + index) + 2 + output->keylen), val_buffer, output->vallen);
+			}
+			// Collision:
+			else
+			{
+				bool found = false;
+				// Search for the key(considering new key length) in the bucket:
+				for(uint8_t k = 0; k < *((uint8_t *)*(output->buckets + index)); k++)
+				{
+					if(memcmp(key_buffer, ((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k)), output->keylen) == 0)
+					{
+						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), val_buffer, output->vallen);
+						*((uint8_t *)*(output->buckets + index)) += 1;
+						found = true;
+						break;
+					}
+				}
+				if(found == false)
+				{
+					// If the bucket is at capacity, expand it:
+					if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
+					{
+						if(*((uint8_t *)*(output->buckets + index)) == 255)
+						{
+							DEBUG_MSG("unmanageable collision");
+							octo_carry_delete(output);
+							free(key_buffer);
+							free(val_buffer);
+							return NULL;
+						}
+						void *bigger_bucket = realloc(*(output->buckets + index), (2 * sizeof(uint8_t)) + *((uint8_t *)*(output->buckets + index) + 1) + 1);
+						if(bigger_bucket == NULL)
+						{
+							DEBUG_MSG("realloc failed during rehash");
+							errno = ENOMEM;
+							octo_carry_delete(output);
+							free(key_buffer);
+							free(val_buffer);
+							return NULL;
+						}
+						*(output->buckets + index) = bigger_bucket;
+						*((uint8_t *)*(output->buckets + index) + 1) += 1;
+					}
+					// Insert at the end of the bucket:
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * (*((uint8_t *)*(output->buckets + index))))), key_buffer, output->keylen);
+					memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * (*((uint8_t *)*(output->buckets + index))) + output->keylen)) + output->keylen, val_buffer, output->vallen);
+					*((uint8_t *)*(output->buckets + index)) += 1;
+				}
+			}
+		}
+	}
+	// At this point we're finished with the old dict, free it:
+	free(key_buffer);
+	free(val_buffer);
+	// Now allocate buckets for the remaining NULL pointers:
+	for(uint64_t i = 0; i < output->bucket_count; i++)
+	{
+		if(*(output->buckets + i) == NULL)
+		{
+			*(output->buckets + i) = malloc((2 * sizeof(uint8_t)) + (output->cellen * new_tolerance));
+			if(*(output->buckets + i) == NULL)
+			{
+				DEBUG_MSG("malloc failed while finalizing new carry_dict; lazy rehash was used, data is unrecoverable");
+				errno = ENOMEM;
+				octo_carry_delete(output);
+				return NULL;
+			}
+			*((uint8_t *)*(output->buckets + i)) = 0;
+			*((uint8_t *)*(output->buckets + i) + 1) = new_tolerance;
+		}
+	}
+	return output;
+}
