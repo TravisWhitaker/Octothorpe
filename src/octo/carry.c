@@ -535,3 +535,95 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	}
 	return output;
 }
+
+// Populate and return a pointer to a octo_stat_carry_t on success, NULL on error:
+octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
+{
+	octo_stat_carry_t *output = calloc(1, sizeof(octo_stat_carry_t));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed while allocating octo_stat_carry_t");
+		errno = ENOMEM;
+		return NULL;
+	}
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		switch(*((uint8_t *)*(dict->buckets + i)))
+		{
+		case 0:
+			output->empty_buckets++;
+			break;
+		case 1:
+			output->optimal_buckets++;
+			output->total_entries++;
+			break;
+		default:
+			output->total_entries += *((uint8_t *)*(dict->buckets + i));
+			output->colliding_buckets++;
+			if(*((uint8_t *)*(dict->buckets + i)) > output->max_bucket_elements)
+			{
+				output->max_bucket_elements = *((uint8_t *)*(dict->buckets + i));
+			}
+			break;
+		}
+	}
+	if((output->empty_buckets + output->optimal_buckets + output->colliding_buckets) != dict->bucket_count)
+	{
+		DEBUG_MSG("sum of bucket types not equal to bucket count");
+		free(output);
+		return NULL;
+	}
+	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
+	return output;
+}
+
+// Print out a summary of octo_stat_carry_t for debugging purposes:
+void octo_carry_stats_msg(octo_dict_carry_t *dict)
+{
+	octo_stat_carry_t *output = calloc(1, sizeof(octo_stat_carry_t));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed while allocating octo_stat_carry_t");
+		errno = ENOMEM;
+		return;
+	}
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		switch(*((uint8_t *)*(dict->buckets + i)))
+		{
+		case 0:
+			output->empty_buckets++;
+			break;
+		case 1:
+			output->optimal_buckets++;
+			output->total_entries++;
+			break;
+		default:
+			output->total_entries += *((uint8_t *)*(dict->buckets + i));
+			output->colliding_buckets++;
+			if(*((uint8_t *)*(dict->buckets + i)) > output->max_bucket_elements)
+			{
+				output->max_bucket_elements = *((uint8_t *)*(dict->buckets + i));
+			}
+			break;
+		}
+	}
+	if((output->empty_buckets + output->optimal_buckets + output->colliding_buckets) != dict->bucket_count)
+	{
+		DEBUG_MSG("sum of bucket types not equal to bucket count");
+		free(output);
+		return;
+	}
+	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
+	printf("\n######## libocto octo_dict_carry_t statistics summary ########\n");
+	printf("octo_carry_dict_t * virtual address:\t%lu\n", (uint64_t)dict);
+	printf("total entries:\t\t\t\t%lu\n", output->total_entries);
+	printf("empty buckets:\t\t\t\t%lu\n", output->empty_buckets);
+	printf("optimal buckets:\t\t\t%lu\n", output->optimal_buckets);
+	printf("colliding buckets:\t\t\t%lu\n", output->colliding_buckets);
+	printf("largest bucket:\t\t\t\t%u\n", output->max_bucket_elements);
+	printf("load factor:\t\t\t\t%Lf\n", output->load);
+	printf("##############################################################\n\n");
+	free(output);
+	return;
+}

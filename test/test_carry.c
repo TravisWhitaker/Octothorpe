@@ -13,7 +13,8 @@ int main()
 {
 	uint8_t init_master_key[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f'};
 	printf("test_carry: Creating test carry_dict...\n");
-	octo_dict_carry_t *test_carry = octo_carry_init(8, 64, 10000000, 2, init_master_key);
+	octo_dict_carry_t *test_carry = octo_carry_init(8, 64, 4096, 2, init_master_key);
+	octo_carry_stats_msg(test_carry);
 	if(test_carry == NULL)
 	{
 		printf("test_carry: FAILED: octo_carry_init returned NULL\n");
@@ -81,9 +82,10 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch reported hit for non-existent key\n");
 		return 1;
 	}
+	octo_carry_stats_msg(test_carry);
 	printf("test_carry: Rehashing dict...\n");
 	uint8_t new_master_key[16] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'g', 'h', 'i', 'j', 'k', 'l'};
-	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, 10, 1, new_master_key);
+	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, 4, 1, new_master_key);
 	printf("test_carry: Poking inserted record...\n");
 	if(!(octo_carry_poke("abcdefg\0", (const octo_dict_carry_t *)test_carry)))
 	{
@@ -132,6 +134,7 @@ int main()
 		printf("test_carry: FAILED: octo_carry_rehash returned null\n");
 		return 1;
 	}
+	octo_carry_stats_msg(test_carry);
 	printf("test_carry: Deleting carry_dict...\n");
 	octo_carry_delete(test_carry);
 	printf("test_carry: SUCCESS!\n");
