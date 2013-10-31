@@ -615,15 +615,15 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 		return;
 	}
 	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
-	printf("\n######## libocto octo_dict_carry_t statistics summary ########\n");
-	printf("octo_carry_dict_t * virtual address:\t%lu\n", (uint64_t)dict);
-	printf("total entries:\t\t\t\t%lu\n", output->total_entries);
-	printf("empty buckets:\t\t\t\t%lu\n", output->empty_buckets);
-	printf("optimal buckets:\t\t\t%lu\n", output->optimal_buckets);
-	printf("colliding buckets:\t\t\t%lu\n", output->colliding_buckets);
-	printf("largest bucket:\t\t\t\t%u\n", output->max_bucket_elements);
-	printf("load factor:\t\t\t\t%Lf\n", output->load);
-	printf("##############################################################\n\n");
+	printf("\n########libocto octo_dict_carry_t statistics summary########\n");
+	printf("virtual address:\t\t%28lu\n", (uint64_t)dict);
+	printf("total entries:\t\t\t%28lu\n", output->total_entries);
+	printf("empty buckets:\t\t\t%28lu\n", output->empty_buckets);
+	printf("optimal buckets:\t\t%28lu\n", output->optimal_buckets);
+	printf("colliding buckets:\t\t%28lu\n", output->colliding_buckets);
+	printf("largest bucket:\t\t\t%28u\n", output->max_bucket_elements);
+	printf("load factor:\t\t\t%28Lf\n", output->load);
+	printf("############################################################\n\n");
 	free(output);
 	return;
 }
