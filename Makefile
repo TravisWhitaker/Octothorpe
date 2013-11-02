@@ -69,4 +69,4 @@ clean:
 	rm -f libocto.a
 	rm -f libocto.so
 	rm -f *.o
-	rm -f *.test
+	make -C test clean

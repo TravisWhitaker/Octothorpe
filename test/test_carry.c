@@ -24,12 +24,12 @@ int main()
 	{
 		if(*((uint8_t *)(test_carry->buckets[i])) != 0)
 		{
-			printf("test_carry: FAILED: bucket %ld has incorrect entry count\nexpected %d, found %d\n", i, 0, *((uint8_t *)(test_carry->buckets[i])));
+			printf("test_carry: FAILED: bucket %lld has incorrect entry count\nexpected %d, found %d\n", (unsigned long long)i, 0, *((uint8_t *)(test_carry->buckets[i])));
 			return 1;
 		}
 		if(*((uint8_t *)(test_carry->buckets[i]) + 1) != 2)
 		{
-			printf("test_carry: FAILED: bucket %ld has incorrect tolerance value\bexpected %d, found %d\n", i, 2, *((uint8_t *)(test_carry->buckets[i]) + 1));
+			printf("test_carry: FAILED: bucket %lld has incorrect tolerance value\bexpected %d, found %d\n", (unsigned long long)i, 2, *((uint8_t *)(test_carry->buckets[i]) + 1));
 			return 1;
 		}
 	}
