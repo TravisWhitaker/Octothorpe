@@ -46,7 +46,7 @@ endif
 
 
 .PHONY: all
-all: libocto.a
+all: libocto.a test
 
 libocto.a: hash.o carry.o
 	$(AR) $(ARFLAGS) libocto.a hash.o carry.o
