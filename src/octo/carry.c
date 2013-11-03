@@ -248,9 +248,9 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	output->cellen = new_cellen;
 	output->bucket_count = new_buckets;
 	memcpy(output->master_key, new_master_key, 16);
-	// If the new keylen/vallen is longer than the old one, we need to read if from an initialized buffer:
-	void *key_buffer = malloc(output->keylen);
-	void *val_buffer = malloc(output->vallen);
+	// If the new keylen/vallen is longer than the old one, we need to read it from an initialized buffer:
+	void *key_buffer = calloc(1, output->keylen);
+	void *val_buffer = calloc(1, output->vallen);
 	if(key_buffer == NULL || val_buffer == NULL)
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
@@ -260,8 +260,6 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
-	memset(key_buffer, '\0', output->keylen);
-	memset(val_buffer, '\0', output->vallen);
 
 	// Allocate the new array of bucket pointers, initializing them to NULL:
 	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
