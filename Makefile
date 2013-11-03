@@ -58,7 +58,7 @@ carry.o: src/octo/carry.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/carry.c
 
 .PHONY: test
-test:
+test: libocto.a
 	make -C test
 
 .PHONY: check

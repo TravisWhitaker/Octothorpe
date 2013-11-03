@@ -567,6 +567,10 @@ octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
 			break;
 		}
 	}
+	if(output->max_bucket_elements == 0)
+	{
+		output->max_bucket_elements = 1;
+	}
 	if((output->empty_buckets + output->optimal_buckets + output->colliding_buckets) != dict->bucket_count)
 	{
 		DEBUG_MSG("sum of bucket types not equal to bucket count");
@@ -607,6 +611,10 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 			}
 			break;
 		}
+	}
+	if(output->max_bucket_elements == 0)
+	{
+		output->max_bucket_elements = 1;
 	}
 	if((output->empty_buckets + output->optimal_buckets + output->colliding_buckets) != dict->bucket_count)
 	{
