@@ -3,7 +3,7 @@
 # libocto is developed with clang:
 CC=clang
 CFLAGS= -Wall -Wextra -Werror -pedantic -O2 -pipe -march=native
-DEBUG_CFLAGS= -Wall -Wextra -Werror -pedantic -O0 -g -pipe -DDEBUG_MSG
+DEBUG_CFLAGS= -Wall -Wextra -Werror -pedantic -O0 -g -pipe -DDEBUG_MSG_ENABLE
 INCLUDE= -I./include
 
 # You make need to change this to '-fpic' if you're using a strange
@@ -44,7 +44,6 @@ endif
 endif
 endif
 
-
 .PHONY: all
 all: libocto.a test
 
@@ -61,6 +60,22 @@ carry.o: src/octo/carry.c
 test: libocto.a
 	make -C test
 
+.PHONY: test.debug
+test.debug: liboctodebug.a
+	make -C test debug
+
+.PHONY: debug
+debug: liboctodebug.a test.debug
+
+liboctodebug.a: hash.o.debug carry.o.debug
+	$(AR) $(ARFLAGS) liboctodebug.a hash.o.debug carry.o.debug
+
+hash.o.debug: src/octo/hash.c
+	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/hash.c -o hash.o.debug
+
+carry.o.debug: src/octo/carry.c
+	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/carry.c -o carry.o.debug
+
 .PHONY: check
 check: test
 
@@ -68,5 +83,6 @@ check: test
 clean:
 	rm -f libocto.a
 	rm -f libocto.so
-	rm -f *.o
+	rm -f liboctodebug.a
+	rm -f *.o*
 	make -C test clean
