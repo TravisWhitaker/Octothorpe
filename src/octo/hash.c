@@ -1,7 +1,6 @@
 // libocto Copyright (C) Travis Whitaker 2013
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 
 #include <octo/types.h>

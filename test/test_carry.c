@@ -15,10 +15,11 @@ char key3[8] = "cdefghi\0";
 char val1[64] = "123456781234567812345678123456781234567812345678123456781234567\0";
 char val2[64] = "234567892345678923456789234567892345678923456789234567892345678\0";
 char val3[64] = "345678934567893456789345678934567893456789345678934567893456789\0";
+uint8_t init_master_key[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f'};
+uint8_t new_master_key[16] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'g', 'h', 'i', 'j', 'k', 'l'};
 
 int main()
 {
-	uint8_t init_master_key[16] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 'a', 'b', 'c', 'd', 'e', 'f'};
 	printf("test_carry: Creating test carry_dict...\n");
 	octo_dict_carry_t *test_carry = octo_carry_init(8, 64, 128, 1, init_master_key);
 	octo_carry_stats_msg(test_carry);
@@ -112,7 +113,6 @@ int main()
 	}
 	octo_carry_stats_msg(test_carry);
 	printf("test_carry: Rehashing dict...\n");
-	uint8_t new_master_key[16] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'g', 'h', 'i', 'j', 'k', 'l'};
 	test_carry = octo_carry_rehash(test_carry, test_carry->keylen, test_carry->vallen, 1, 1, new_master_key);
 	octo_carry_stats_msg(test_carry);
 	printf("test_carry: Poking inserted records...\n");
