@@ -211,7 +211,6 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 
 // Re-create the carry_dict with a new key length, value length(both will be truncated), number of buckets,
 // tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
-/*
 octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -372,10 +371,10 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	}
 	return output;
 }
-*/
 
 // Like octo_carry_rehash, but retain the original dict. It is up to the caller
 // to free the old dict:
+/*
 octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -535,6 +534,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	}
 	return output;
 }
+*/
 
 // Populate and return a pointer to a octo_stat_carry_t on success, NULL on error:
 octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
