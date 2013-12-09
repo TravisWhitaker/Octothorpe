@@ -500,14 +500,14 @@ void octo_cll_stats_msg(octo_dict_cll_t *dict)
 	}
 	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
 	printf("\n######## libocto octo_dict_cll_t statistics summary ########\n");
-	printf("virtual address:%46llu\n", (unsigned long long)dict);
-	printf("total entries:%48llu\n", (unsigned long long)output->total_entries);
-	printf("null buckets:%49llu\n", (unsigned long long)output->null_buckets);
-	printf("optimal buckets:%46llu\n", (unsigned long long)output->optimal_buckets);
-	printf("chained buckets:%46llu\n", (unsigned long long)output->chained_buckets);
-	printf("longest chain:%48llu\n", (unsigned long long)output->max_chain_len);
-	printf("load factor:%50Lf\n", output->load);
-	printf("##############################################################\n\n");
+	printf("virtual address:%44llu\n", (unsigned long long)dict);
+	printf("total entries:%46llu\n", (unsigned long long)output->total_entries);
+	printf("null buckets:%47llu\n", (unsigned long long)output->null_buckets);
+	printf("optimal buckets:%44llu\n", (unsigned long long)output->optimal_buckets);
+	printf("chained buckets:%44llu\n", (unsigned long long)output->chained_buckets);
+	printf("longest chain:%46llu\n", (unsigned long long)output->max_chain_len);
+	printf("load factor:%48Lf\n", output->load);
+	printf("############################################################\n\n");
 	free(output);
 	return;
 }

@@ -23,7 +23,7 @@ int main()
 	uint8_t *init_master_key = octo_keygen();
 	uint8_t *new_master_key = octo_keygen();
 	printf("test_cll: Creating test cll_dict...\n");
-	octo_dict_cll_t *test_cll = octo_cll_init(8, 64, 1, init_master_key);
+	octo_dict_cll_t *test_cll = octo_cll_init(8, 64, 128, init_master_key);
 	if(test_cll == NULL)
 	{
 		printf("test_cll: FAILED: octo_cll_init returned NULL\n");
