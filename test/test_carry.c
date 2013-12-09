@@ -24,12 +24,12 @@ int main()
 	uint8_t *new_master_key = octo_keygen();
 	printf("test_carry: Creating test carry_dict...\n");
 	octo_dict_carry_t *test_carry = octo_carry_init(8, 64, 128, 1, init_master_key);
-	octo_carry_stats_msg(test_carry);
 	if(test_carry == NULL)
 	{
 		printf("test_carry: FAILED: octo_carry_init returned NULL\n");
 		return 1;
 	}
+	octo_carry_stats_msg(test_carry);
 	printf("test_carry: Doing test inserts...\n");
 	if(octo_carry_insert(key1, val1, (const octo_dict_carry_t *)test_carry) > 0)
 	{

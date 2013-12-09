@@ -81,7 +81,7 @@ void octo_cll_delete(octo_dict_cll_t *target)
 		this = *(target->buckets + i);
 		while(this != NULL)
 		{
-			next = *((void *)this);
+			next = (void *)*((void *)this);
 			free(this);
 			this = next;
 		}
@@ -112,8 +112,8 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 			return 1;
 		}
 		*((void *)tmp) = NULL;
-		memcpy(tmp + sizeof(void *), key, dict->keylen);
-		memcpy(tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
+		memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
+		memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
 		*(dict->buckets + index) = tmp;
 		return 0;
 	}
@@ -124,10 +124,10 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 	void *old_head = this;
 	while(this != NULL)
 	{
-		next = *((void *)this);
-		if(memcmp(key, this + sizeof(void *), dict->keylen) == 0)
+		next = (void *)*((void *)this);
+		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
 		{
-			memcpy(this + sizeof(void *) + dict->keylen, value, dict->vallen);
+			memcpy((char *)this + sizeof(void *) + dict->keylen, value, dict->vallen);
 			return 0;
 		}
 		this = next;
@@ -142,8 +142,8 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 		return 1;
 	}
 	*((void *)tmp) = old_head;
-	memcpy(tmp + sizeof(void *), key, dict->keylen);
-	memcpy(tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
+	memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
+	memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
 	*(dict->buckets + index) = tmp;
 	return 0;
 }
@@ -167,8 +167,8 @@ void *octo_ll_fetch(const void *key, const octo_dict_cll_t *dict)
 	void *next = NULL;
 	while(this != NULL)
 	{
-		next = *((void *)this);
-		if(memcmp(key, this + sizeof(void *), dict->keylen) == 0)
+		next = (void *)*((void *)this);
+		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			void *output = malloc(dict->vallen);
 			if(output == NULL)
@@ -177,7 +177,7 @@ void *octo_ll_fetch(const void *key, const octo_dict_cll_t *dict)
 				errno = ENOMEM;
 				return NULL;
 			}
-			memcpy(output, this + sizeof(void *) + dict->keylen, dict->vallen);
+			memcpy(output, (char *)this + sizeof(void *) + dict->keylen, dict->vallen);
 			return output;
 		}
 		this = next;
@@ -204,8 +204,8 @@ int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
 	void *next = NULL;
 	while(this != NULL)
 	{
-		next = *((void *)this);
-		if(memcmp(key, this + sizeof(void *), dict->keylen) == 0)
+		next = (void *)*((void *)this);
+		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			return 1;
 		}
@@ -289,9 +289,9 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 		this = *(dict->buckets + i);
 		while(this != NULL)
 		{
-			next = *((void *)this);
-			memcpy(key_buffer, this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, this + sizeof(void *), buffer_vallen);
+			next = (void *)*((void *)this);
+			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
+			memcpy(val_buffer, (char *)this + sizeof(void *), buffer_vallen);
 			octo_cll_insert(key_buffer, val_buffer, output);
 			free(this);
 			this = next;
@@ -380,9 +380,9 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 		this = *(dict->buckets + i);
 		while(this != NULL)
 		{
-			next = *((void *)this);
-			memcpy(key_buffer, this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, this + sizeof(void *), buffer_vallen);
+			next = (void *)*((void *)this);
+			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
+			memcpy(val_buffer, (char *)this + sizeof(void *), buffer_vallen);
 			octo_cll_insert(key_buffer, val_buffer, output);
 			this = next;
 		}
@@ -423,7 +423,7 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 		current_chain_len = 1;
 		while(this != NULL)
 		{
-			next = *((void *)this);
+			next = (void *)*((void *)this);
 			current_chain_len++;
 			output->total_entires++;
 			this = next;
@@ -478,7 +478,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 		current_chain_len = 1;
 		while(this != NULL)
 		{
-			next = *((void *)this);
+			next = (void *)*((void *)this);
 			current_chain_len++;
 			output->total_entires++;
 			this = next;
