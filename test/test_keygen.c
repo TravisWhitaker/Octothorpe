@@ -18,6 +18,7 @@ int main()
 	{
 		printf("%x ", test_key[i]);
 	}
+	free(test_key);
 	printf("\ntest_keygen: SUCCESS!\n");
 	return 0;
 }
