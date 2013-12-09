@@ -19,7 +19,7 @@ typedef struct
 	uint64_t null_buckets;
 	uint64_t optimal_buckets;
 	uint64_t chained_buckets;
-	uint8_t max_chain_len;
+	uint64_t max_chain_len;
 	long double load;
 } octo_stat_cll_t;
 
