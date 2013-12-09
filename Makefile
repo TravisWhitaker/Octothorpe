@@ -83,7 +83,7 @@ carry.o.debug: src/octo/carry.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/carry.c -o carry.o.debug
 
 cll.o.debug: src/octo/cll.c
-	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/cll.o -o cll.o.debug
+	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/cll.c -o cll.o.debug
 
 keygen.o.debug: src/octo/keygen.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/keygen.c -o keygen.o.debug

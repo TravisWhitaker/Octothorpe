@@ -81,7 +81,7 @@ void octo_cll_delete(octo_dict_cll_t *target)
 		this = *(target->buckets + i);
 		while(this != NULL)
 		{
-			next = (void *)*((void *)this);
+			next = *((void **)this);
 			free(this);
 			this = next;
 		}
@@ -111,7 +111,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 			errno = ENOMEM;
 			return 1;
 		}
-		*((void *)tmp) = NULL;
+		*((void **)tmp) = NULL;
 		memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
 		memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
 		*(dict->buckets + index) = tmp;
@@ -124,7 +124,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 	void *old_head = this;
 	while(this != NULL)
 	{
-		next = (void *)*((void *)this);
+		next = *((void **)this);
 		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			memcpy((char *)this + sizeof(void *) + dict->keylen, value, dict->vallen);
@@ -141,7 +141,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 		errno = ENOMEM;
 		return 1;
 	}
-	*((void *)tmp) = old_head;
+	*((void **)tmp) = old_head;
 	memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
 	memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
 	*(dict->buckets + index) = tmp;
@@ -150,7 +150,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 
 // Fetch a value from a cll_dict. Return NULL on error, return a pointer to
 // the cll_dict itself if the value is not found:
-void *octo_ll_fetch(const void *key, const octo_dict_cll_t *dict)
+void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
@@ -167,7 +167,7 @@ void *octo_ll_fetch(const void *key, const octo_dict_cll_t *dict)
 	void *next = NULL;
 	while(this != NULL)
 	{
-		next = (void *)*((void *)this);
+		next = *((void **)this);
 		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			void *output = malloc(dict->vallen);
@@ -204,7 +204,7 @@ int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
 	void *next = NULL;
 	while(this != NULL)
 	{
-		next = (void *)*((void *)this);
+		next = *((void **)this);
 		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			return 1;
@@ -260,7 +260,7 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_carry_delete(output);
+		octo_cll_delete(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -289,9 +289,9 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 		this = *(dict->buckets + i);
 		while(this != NULL)
 		{
-			next = (void *)*((void *)this);
+			next = *((void **)this);
 			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, (char *)this + sizeof(void *), buffer_vallen);
+			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
 			octo_cll_insert(key_buffer, val_buffer, output);
 			free(this);
 			this = next;
@@ -351,7 +351,7 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_carry_delete(output);
+		octo_cll_delete(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -380,9 +380,9 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 		this = *(dict->buckets + i);
 		while(this != NULL)
 		{
-			next = (void *)*((void *)this);
+			next = *((void **)this);
 			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, (char *)this + sizeof(void *), buffer_vallen);
+			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
 			octo_cll_insert(key_buffer, val_buffer, output);
 			this = next;
 		}
@@ -412,7 +412,7 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 			output->null_buckets++;
 			continue;
 		}
-		else if(*((void *)*(dict->buckets + i)) == NULL)
+		else if(*(void **)*(dict->buckets + i) == NULL)
 		{
 			output->optimal_buckets++;
 			output->total_entries++;
@@ -420,17 +420,17 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 		}
 		output->chained_buckets++;
 		this = *(dict->buckets + i);
-		current_chain_len = 1;
+		current_chain_len = 0;
 		while(this != NULL)
 		{
-			next = (void *)*((void *)this);
+			next = *((void **)this);
 			current_chain_len++;
-			output->total_entires++;
+			output->total_entries++;
 			this = next;
 		}
 		if(current_chain_len > output->max_chain_len)
 		{
-			output->max_chain_nel = current_chain_len;
+			output->max_chain_len = current_chain_len;
 		}
 	}
 	if(output->max_chain_len == 0)
@@ -447,8 +447,8 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 	return output;
 }
 
-// Print out a summary of octo_stat_carry_t for debugging purposes:
-void octo_carry_stats_msg(octo_dict_carry_t *dict)
+// Print out a summary of octo_stat_cll_t for debugging purposes:
+void octo_cll_stats_msg(octo_dict_cll_t *dict)
 {
 	octo_stat_cll_t *output = calloc(1, sizeof(octo_stat_cll_t));
 	void *this;
@@ -458,7 +458,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 	{
 		DEBUG_MSG("malloc failed while allocating octo_stat_cll_t");
 		errno = ENOMEM;
-		return NULL;
+		return;
 	}
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
@@ -467,7 +467,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 			output->null_buckets++;
 			continue;
 		}
-		else if(*((void *)*(dict->buckets + i)) == NULL)
+		else if(*((void **)*(dict->buckets + i)) == NULL)
 		{
 			output->optimal_buckets++;
 			output->total_entries++;
@@ -475,17 +475,17 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 		}
 		output->chained_buckets++;
 		this = *(dict->buckets + i);
-		current_chain_len = 1;
+		current_chain_len = 0;
 		while(this != NULL)
 		{
-			next = (void *)*((void *)this);
+			next = *((void **)this);
 			current_chain_len++;
-			output->total_entires++;
+			output->total_entries++;
 			this = next;
 		}
 		if(current_chain_len > output->max_chain_len)
 		{
-			output->max_chain_nel = current_chain_len;
+			output->max_chain_len = current_chain_len;
 		}
 	}
 	if(output->max_chain_len == 0)
@@ -496,16 +496,16 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 	{
 		DEBUG_MSG("sum of bucket types not equal to bucket count");
 		free(output);
-		return NULL;
+		return;
 	}
 	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
-	printf("\n######## libocto octo_dict_carry_t statistics summary ########\n");
+	printf("\n######## libocto octo_dict_cll_t statistics summary ########\n");
 	printf("virtual address:%46llu\n", (unsigned long long)dict);
 	printf("total entries:%48llu\n", (unsigned long long)output->total_entries);
 	printf("null buckets:%49llu\n", (unsigned long long)output->null_buckets);
 	printf("optimal buckets:%46llu\n", (unsigned long long)output->optimal_buckets);
 	printf("chained buckets:%46llu\n", (unsigned long long)output->chained_buckets);
-	printf("longest chain:%48u\n", output->max_bucket_elements);
+	printf("longest chain:%48llu\n", (unsigned long long)output->max_chain_len);
 	printf("load factor:%50Lf\n", output->load);
 	printf("##############################################################\n\n");
 	free(output);

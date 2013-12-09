@@ -8,7 +8,7 @@ INCLUDE= -I../include
 LFLAGS = -L../ -locto
 
 .PHONY: all
-all: keygen_test carry_test
+all: keygen_test carry_test cll_test
 	./keygen_test
 	./carry_test
 	./cll_test
@@ -20,7 +20,7 @@ carry_test: test_carry.c
 	$(CC) $(INCLUDE) -o carry_test  $(CFLAGS) test_carry.c $(LFLAGS)
 
 cll_test: test_cll.c
-	$(CC) $(INCLUDE) -o cll_test $(CFLAGS) test_cll.c $(LFLAGA)
+	$(CC) $(INCLUDE) -o cll_test $(CFLAGS) test_cll.c $(LFLAGS)
 
 .PHONY: debug
 debug: keygen_test_debug carry_test_debug cll_test_debug

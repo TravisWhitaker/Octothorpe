@@ -16,7 +16,7 @@ int main()
 	printf("test_keygen: Got key ");
 	for(unsigned int i = 0; i < 16; i++)
 	{
-		printf("%x ", test_key[i]);
+		printf("%.2x ", test_key[i]);
 	}
 	free(test_key);
 	printf("\ntest_keygen: SUCCESS!\n");
