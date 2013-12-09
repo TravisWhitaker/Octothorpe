@@ -94,7 +94,10 @@ void octo_carry_delete(octo_dict_carry_t *target)
 {
 	for(uint64_t i = 0; i < target->bucket_count; i++)
 	{
-		free(*(target->buckets + i));
+		if(*(target->buckets + i) != NULL)
+		{
+			free(*(target->buckets + i));
+		}
 	}
 	free(target->buckets);
 	free(target);
@@ -521,6 +524,9 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 			}
 		}
 	}
+	// At this point we're finished with our buffers:
+	free(key_buffer);
+	free(val_buffer);
 	// Now allocate buckets for the remaining NULL pointers:
 	for(uint64_t i = 0; i < output->bucket_count; i++)
 	{
