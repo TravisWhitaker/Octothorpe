@@ -29,7 +29,7 @@ uint8_t *octo_keygen()
 	initstate((unsigned int)time(NULL), randstate, 256);
 	for(unsigned int i = 0; i < 16; i++)
 	{
-		output[i] = (char)random();
+		output[i] = (uint8_t)random();
 	}
 	free(randstate);
 	return output;
