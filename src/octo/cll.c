@@ -74,13 +74,22 @@ octo_dict_cll_t *octo_cll_init(const size_t init_keylen, const size_t init_valle
 }
 
 // Delete a carry_dict:
-void octo_carry_delete(octo_dict_carry_t *target)
+void octo_cll_delete(octo_dict_cll_t *target)
 {
+	void *this = NULL;
+	void *next = NULL;
 	for(uint64_t i = 0; i < target->bucket_count; i++)
 	{
-		if(*(target->buckets + i) != NULL)
+		if(*(target->buckets + i) == NULL)
 		{
-			free(*(target->buckets + i));
+			continue;
+		}
+		this = *(target->buckets + i);
+		while(this != NULL)
+		{
+			next = *((void *)this);
+			free(this);
+			this = next;
 		}
 	}
 	free(target->buckets);
