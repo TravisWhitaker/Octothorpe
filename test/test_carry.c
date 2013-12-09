@@ -266,6 +266,8 @@ int main()
 	}
 	printf("test_carry: Deleting carry_dict...\n");
 	octo_carry_delete(test_carry);
+	free(init_master_key);
+	free(new_master_key);
 	printf("test_carry: SUCCESS!\n");
 	return 0;
 }
