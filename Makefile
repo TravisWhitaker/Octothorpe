@@ -47,7 +47,7 @@ endif
 .PHONY: all
 all: libocto.a test
 
-libocto.a: hash.o carry.o cll.o keygen.o
+libocto.a: hash.o carry.o keygen.o
 	$(AR) $(ARFLAGS) libocto.a hash.o carry.o keygen.o
 
 hash.o: src/octo/hash.c
@@ -55,9 +55,6 @@ hash.o: src/octo/hash.c
 
 carry.o: src/octo/carry.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/carry.c
-
-cll.o: src/octo/cll.c
-	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/cll.c
 
 keygen.o: src/octo/keygen.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/keygen.c
@@ -81,9 +78,6 @@ hash.o.debug: src/octo/hash.c
 
 carry.o.debug: src/octo/carry.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/carry.c -o carry.o.debug
-
-cll.o.debug: src/octo/cll.c
-	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/cll.c -o cll.o.debug
 
 keygen.o.debug: src/octo/keygen.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/keygen.c -o keygen.o.debug

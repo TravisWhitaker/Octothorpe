@@ -8,10 +8,9 @@ INCLUDE= -I../include
 LFLAGS = -L../ -locto
 
 .PHONY: all
-all: keygen_test carry_test cll_test
+all: keygen_test carry_test
 	./keygen_test
 	./carry_test
-	./cll_test
 
 keygen_test: test_keygen.c
 	$(CC) $(INCLUDE) -o keygen_test $(CFLAGS) test_keygen.c $(LFLAGS)
@@ -19,23 +18,16 @@ keygen_test: test_keygen.c
 carry_test: test_carry.c
 	$(CC) $(INCLUDE) -o carry_test  $(CFLAGS) test_carry.c $(LFLAGS)
 
-cll_test: test_cll.c
-	$(CC) $(INCLUDE) -o cll_test $(CFLAGS) test_cll.c $(LFLAGS)
-
 .PHONY: debug
-debug: keygen_test_debug carry_test_debug cll_test_debug
+debug: keygen_test_debug carry_test_debug
 	./keygen_test_debug
 	./carry_test_debug
-	./cll_test_debug
 
 keygen_test_debug: test_keygen.c
 	$(CC) $(INCLUDE) -o keygen_test_debug $(CFLAGS) test_keygen.c -L../ -loctodebug
 
 carry_test_debug: test_carry.c
 	$(CC) $(INCLUDE) -o carry_test_debug $(CFLAGS) test_carry.c -L../ -loctodebug
-
-cll_test_debug: test_cll.c
-	$(CC) $(INCLUDE) -o cll_test_debug $(CFLAGS) test_cll.c -L../ -loctodebug
 
 .PHONY: clean
 clean:
