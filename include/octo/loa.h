@@ -10,7 +10,7 @@ typedef struct
 	size_t cellen;
 	uint64_t bucket_count;
 	uint8_t master_key[16];
-	void **buckets;
+	void *buckets;
 } octo_dict_loa_t;
 
 typedef struct
