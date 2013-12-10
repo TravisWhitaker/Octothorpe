@@ -58,25 +58,9 @@ octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_valle
 	return output;
 }
 
-// Delete a cll_dict:
-void octo_cll_delete(octo_dict_cll_t *target)
+// Delete a loa_dict:
+void octo_loa_delete(octo_dict_loa_t *target)
 {
-	void *this = NULL;
-	void *next = NULL;
-	for(uint64_t i = 0; i < target->bucket_count; i++)
-	{
-		if(*(target->buckets + i) == NULL)
-		{
-			continue;
-		}
-		this = *(target->buckets + i);
-		while(this != NULL)
-		{
-			next = *((void **)this);
-			free(this);
-			this = next;
-		}
-	}
 	free(target->buckets);
 	free(target);
 	return;
