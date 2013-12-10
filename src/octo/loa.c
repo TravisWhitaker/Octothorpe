@@ -44,7 +44,7 @@ octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_valle
 	output->cellen = cellen_tmp;
 
 	// Allocate the array of buckets:
-	void *buckets_tmp = calloc(init_buckets, output->cellen);
+	void *buckets_tmp = calloc(init_buckets, output->cellen + 1);
 	if(buckets_tmp == NULL)
 	{
 		DEBUG_MSG("unable to malloc for **buckets_tmp");
