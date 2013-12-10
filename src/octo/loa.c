@@ -66,61 +66,52 @@ void octo_loa_delete(octo_dict_loa_t *target)
 	return;
 }
 
-// Insert a value into a cll_dict. Return 0 on success, 1 on malloc failure:
-int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *dict)
+// Insert a value into a loa_dict. Return 0 on success, 1 on full bucket array:
+int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	void *tmp;
 
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket yet, insert the record:
-	if(*(dict->buckets + index) == NULL)
+	if((char)*(dict->buckets + index) == 0)
 	{
-		tmp = malloc(sizeof(void *) + dict->cellen);
-		if(tmp == NULL)
-		{
-			DEBUG_MSG("unable to malloc new bucket");
-			errno = ENOMEM;
-			return 1;
-		}
-		*((void **)tmp) = NULL;
-		memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
-		memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
-		*(dict->buckets + index) = tmp;
+		(char)*(dict->buckets + index) = 0xff;
+		memcpy(dict->buckets + index + 1, key, dict->keylen);
+		memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
+		return 0;
+	}
+	// Are we updating a key's value?
+	else if(memcmp(key, dict->buckets + index + 1, dict->keylen) == 0)
+	{
+		memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
 		return 0;
 	}
 
-	// Check to see if the key is already in the bucket:
-	void *this = *(dict->buckets + index);
-	void *next = NULL;
-	void *old_head = this;
-	while(this != NULL)
+	// Linearly probe the remaining addresses:
+	uint64_t atmpt = 1;
+	while(atmpt < dict->bucket_count)
 	{
-		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		index = index < (dict->buckets + dict->bucket_count) ? index + 1 : 0;
+		// Is this bucket available?
+		if((char)*(dict->buckets + index) == 0)
 		{
-			memcpy((char *)this + sizeof(void *) + dict->keylen, value, dict->vallen);
+			(char)*(dict->buckets + index) = 0xff;
+			memcpy(dict->buckets + index + 1, key, dict->keylen);
+			memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
 			return 0;
 		}
-		this = next;
+		// Did we find the key?
+		else if(memcmp(key, dict->buckets + index + 1, dict->keylen) == 0)
+		{
+			memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
+			return 0;
+		}
+		atmpt++;
 	}
-
-	// Nope, insert at the head of the chain:
-	tmp = malloc(sizeof(void *) + dict->cellen);
-	if(tmp == NULL)
-	{
-		DEBUG_MSG("unable to malloc new bucket");
-		errno = ENOMEM;
-		return 1;
-	}
-	*((void **)tmp) = old_head;
-	memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
-	memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
-	*(dict->buckets + index) = tmp;
-	return 0;
+	return 1;
 }
 
 // Fetch a value from a cll_dict. Return NULL on error, return a pointer to
