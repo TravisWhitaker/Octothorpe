@@ -47,8 +47,8 @@ endif
 .PHONY: all
 all: libocto.a test
 
-libocto.a: hash.o carry.o cll.o keygen.o
-	$(AR) $(ARFLAGS) libocto.a hash.o carry.o cll.o keygen.o
+libocto.a: hash.o carry.o cll.o loa.o keygen.o
+	$(AR) $(ARFLAGS) libocto.a hash.o carry.o cll.o loa.o keygen.o
 
 hash.o: src/octo/hash.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/hash.c
@@ -58,6 +58,9 @@ carry.o: src/octo/carry.c
 
 cll.o: src/octo/cll.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/cll.c
+
+loa.o: src/octo/loa.c
+	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/loa.c
 
 keygen.o: src/octo/keygen.c
 	$(CC) -c $(CFLAGS) $(INCLUDE) $(FPIC) src/octo/keygen.c
@@ -73,8 +76,8 @@ test.debug: liboctodebug.a
 .PHONY: debug
 debug: liboctodebug.a test.debug
 
-liboctodebug.a: hash.o.debug carry.o.debug cll.o.debug keygen.o.debug
-	$(AR) $(ARFLAGS) liboctodebug.a hash.o.debug carry.o.debug cll.o.debug keygen.o.debug
+liboctodebug.a: hash.o.debug carry.o.debug cll.o.debug loa.o.debug keygen.o.debug
+	$(AR) $(ARFLAGS) liboctodebug.a hash.o.debug carry.o.debug cll.o.debug loa.o.debug keygen.o.debug
 
 hash.o.debug: src/octo/hash.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/hash.c -o hash.o.debug
@@ -84,6 +87,9 @@ carry.o.debug: src/octo/carry.c
 
 cll.o.debug: src/octo/cll.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/cll.c -o cll.o.debug
+
+loa.o.debug: src/octo/loa.c
+	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/loa.c -o loa.o.debug
 
 keygen.o.debug: src/octo/keygen.c
 	$(CC) -c $(DEBUG_CFLAGS) $(INCLUDE) $(FPIC) src/octo/keygen.c -o keygen.o.debug
