@@ -114,39 +114,50 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	return 1;
 }
 
-// Fetch a value from a cll_dict. Return NULL on error, return a pointer to
-// the cll_dict itself if the value is not found:
-void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
+// Fetch a value from a loa_dict. Return NULL on error, return a pointer to
+// the loa_dict itself if the value is not found:
+void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
-	// If there's nothing in the bucket, the value isn't in the dict:
-	if(*(dict->buckets + index) == NULL)
+	//Is the bucket occupied? If so, did we find the key?
+	if((char)*(dict->buckets + index) == 0xff && memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
 	{
-		return (void *)dict;
-	}
-
-	void *this = *(dict->buckets + index);
-	void *next = NULL;
-	while(this != NULL)
-	{
-		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		void *output = malloc(sizeof(dict->vallen));
+		if(output == NULL)
 		{
-			void *output = malloc(dict->vallen);
+			DEBUG_MSG("key found, but malloc failed")
+			errno = ENOMEM;
+			return NULL;
+		}
+		memcpy(output, dict->buckets + index + 1 + dict->keylen, dict->vallen);
+		return output;
+	}
+	
+	uint64_t atmpt = 1;
+	while(atmpt < dict->bucket_count)
+	{
+		index = index < (dict->buckets + dict->bucket_count) ? index + 1 : 0;
+		if((char)*(dict->buckets + index) == 0)
+		{
+			return (void *)dict;
+		}
+		if(memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
+		{
+			void *output = malloc(sizeof(dict->vallen));
 			if(output == NULL)
 			{
-				DEBUG_MSG("lookup successful but malloc failed");
+				DEBUG_MSG("key found, but malloc failed");
 				errno = ENOMEM;
 				return NULL;
 			}
-			memcpy(output, (char *)this + sizeof(void *) + dict->keylen, dict->vallen);
+			memcpy(output, dict->buckets + index + 1 + dict->keylen, dict->vallen);
 			return output;
 		}
-		this = next;
+		atmpt++;
 	}
 	return (void *)dict;
 }
