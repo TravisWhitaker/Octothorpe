@@ -76,9 +76,9 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket yet, insert the record:
-	if(*((char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 	{
-		*((char *)dict->buckets + (index * (dict->cellen + 1))) = 0xff;
+		*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xff;
 		memcpy((char *)dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen);
 		memcpy((char *)dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, value, dict->vallen);
 		return 0;
@@ -96,9 +96,9 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
 		// Is this bucket available?
-		if(*((char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
-			*((char *)dict->buckets + (index * (dict->cellen + 1))) = 0xff;
+			*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xff;
 			memcpy((char *)dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen);
 			memcpy((char *)dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, value, dict->vallen);
 			return 0;
@@ -124,7 +124,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	index = hash % dict->bucket_count;
 
 	//Is the bucket occupied? If so, did we find the key?
-	if(*((char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
 		void *output = malloc(sizeof(dict->vallen));
 		if(output == NULL)
@@ -141,7 +141,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	while(atmpt < dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
-		if(*((char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return (void *)dict;
 		}
@@ -172,7 +172,7 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	index = hash % dict->bucket_count;
 
 	//Is the bucket occupied? If so, did we find the key?
-	if(*((char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
 		return 1;
 	}
@@ -181,7 +181,7 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	while(atmpt < dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
-		if(*((char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return 0;
 		}
@@ -345,7 +345,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*((char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
 			continue;
 		}
@@ -375,7 +375,7 @@ octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 	uint64_t hash;
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*((char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
 			output->empty_buckets++;
 			continue;
@@ -414,7 +414,7 @@ void octo_loa_stats_msg(octo_dict_loa_t *dict)
 	uint64_t hash;
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*((char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
 			output->empty_buckets++;
 			continue;
