@@ -92,7 +92,7 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 
 	// Linearly probe the remaining addresses:
 	uint64_t atmpt = 1;
-	while(atmpt < dict->bucket_count)
+	while(atmpt <= dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
 		// Is this bucket available?
@@ -138,7 +138,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	}
 	
 	uint64_t atmpt = 1;
-	while(atmpt < dict->bucket_count)
+	while(atmpt <= dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
@@ -147,7 +147,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 		}
 		if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 		{
-			void *output = malloc(sizeof(dict->vallen));
+			void *output = malloc(dict->vallen);
 			if(output == NULL)
 			{
 				DEBUG_MSG("key found, but malloc failed");
@@ -178,7 +178,7 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	}
 	
 	uint64_t atmpt = 1;
-	while(atmpt < dict->bucket_count)
+	while(atmpt <= dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)

@@ -115,7 +115,7 @@ int main()
 	}
 	octo_loa_stats_msg(test_loa);
 	printf("test_loa: Rehashing dict...\n");
-	test_loa = octo_loa_rehash(test_loa, test_loa->keylen, test_loa->vallen, 1, new_master_key);
+	test_loa = octo_loa_rehash(test_loa, test_loa->keylen, test_loa->vallen, 3, new_master_key);
 	octo_loa_stats_msg(test_loa);
 	printf("test_loa: Poking inserted records...\n");
 	if(!(octo_loa_poke(key1, (const octo_dict_loa_t *)test_loa)))
