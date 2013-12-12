@@ -76,17 +76,17 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket yet, insert the record:
-	if((char)*(dict->buckets + index) == 0)
+	if((char)*(dict->buckets + (index * (dict->cellen + 1))) == 0)
 	{
-		(char)*(dict->buckets + index) = 0xff;
-		memcpy(dict->buckets + index + 1, key, dict->keylen);
-		memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
+		(char)*(dict->buckets + (index * (dict->cellen + 1))) = 0xff;
+		memcpy(dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen);
+		memcpy(dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, value, dict->vallen);
 		return 0;
 	}
 	// Are we updating a key's value?
-	else if(memcmp(key, dict->buckets + index + 1, dict->keylen) == 0)
+	else if(memcmp(key, dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
-		memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
+		memcpy(dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, value, dict->vallen);
 		return 0;
 	}
 
@@ -94,19 +94,19 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	uint64_t atmpt = 1;
 	while(atmpt < dict->bucket_count)
 	{
-		index = index < (dict->buckets + dict->bucket_count) ? index + 1 : 0;
+		index = (index * (dict->cellen + 1)) < (dict->buckets + (dict->bucket_count * (dict->cellen + 1))) ? index + 1 : 0;
 		// Is this bucket available?
-		if((char)*(dict->buckets + index) == 0)
+		if((char)*(dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
-			(char)*(dict->buckets + index) = 0xff;
-			memcpy(dict->buckets + index + 1, key, dict->keylen);
-			memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
+			(char)*(dict->buckets + (index * (dict->cellen + 1))) = 0xff;
+			memcpy(dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen);
+			memcpy(dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, value, dict->vallen);
 			return 0;
 		}
 		// Did we find the key?
-		else if(memcmp(key, dict->buckets + index + 1, dict->keylen) == 0)
+		else if(memcmp(key, dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 		{
-			memcpy(dict->buckets + index + 1 + dict->keylen, value, dict->vallen);
+			memcpy(dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, value, dict->vallen);
 			return 0;
 		}
 		atmpt++;
@@ -124,7 +124,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	index = hash % dict->bucket_count;
 
 	//Is the bucket occupied? If so, did we find the key?
-	if((char)*(dict->buckets + index) == 0xff && memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
+	if((char)*(dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen) == 0)
 	{
 		void *output = malloc(sizeof(dict->vallen));
 		if(output == NULL)
@@ -133,19 +133,19 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 			errno = ENOMEM;
 			return NULL;
 		}
-		memcpy(output, dict->buckets + index + 1 + dict->keylen, dict->vallen);
+		memcpy(output, dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, dict->vallen);
 		return output;
 	}
 	
 	uint64_t atmpt = 1;
 	while(atmpt < dict->bucket_count)
 	{
-		index = index < (dict->buckets + dict->bucket_count) ? index + 1 : 0;
-		if((char)*(dict->buckets + index) == 0)
+		index = (index * (dict->cellen + 1)) < (dict->buckets + (dict->bucket_count * (dict->cellen + 1))) ? index + 1 : 0;
+		if((char)*(dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return (void *)dict;
 		}
-		if(memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
+		if(memcmp(key, dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen) == 0)
 		{
 			void *output = malloc(sizeof(dict->vallen));
 			if(output == NULL)
@@ -154,7 +154,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 				errno = ENOMEM;
 				return NULL;
 			}
-			memcpy(output, dict->buckets + index + 1 + dict->keylen, dict->vallen);
+			memcpy(output, dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, dict->vallen);
 			return output;
 		}
 		atmpt++;
@@ -172,7 +172,7 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	index = hash % dict->bucket_count;
 
 	//Is the bucket occupied? If so, did we find the key?
-	if((char)*(dict->buckets + index) == 0xff && memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
+	if((char)*(dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen) == 0)
 	{
 		return 1;
 	}
@@ -180,12 +180,12 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	uint64_t atmpt = 1;
 	while(atmpt < dict->bucket_count)
 	{
-		index = index < (dict->buckets + dict->bucket_count) ? index + 1 : 0;
-		if((char)*(dict->buckets + index) == 0)
+		index = (index * (dict->cellen + 1)) < (dict->buckets + (dict->bucket_count * (dict->cellen + 1))) ? index + 1 : 0;
+		if((char)*(dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return 0;
 		}
-		if(memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
+		if(memcmp(key, dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen) == 0)
 		{
 			return 1;
 		}
@@ -247,7 +247,7 @@ octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen,
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
 
 	// Allocate the new array of buckets:
-	void *buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
+	void *buckets_tmp = calloc(new_buckets, output->cellen + 1);
 	if(buckets_tmp == NULL)
 	{
 		DEBUG_MSG("unable to malloc for *buckets_tmp");
@@ -333,7 +333,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
 
 	// Allocate the new array of buckets:
-	void *buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
+	void *buckets_tmp = calloc(new_buckets, output->cellen + 1);
 	if(buckets_tmp == NULL)
 	{
 		DEBUG_MSG("unable to malloc for *buckets_tmp");
