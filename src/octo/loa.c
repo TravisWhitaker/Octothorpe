@@ -368,7 +368,7 @@ octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 	octo_stat_loa_t *output = calloc(1, sizeof(*output));
 	if(output == NULL)
 	{
-		DEBUG_MSG("malloc failed while allocating octo_stat_cll_t");
+		DEBUG_MSG("malloc failed while allocating octo_stat_loa_t");
 		errno = ENOMEM;
 		return NULL;
 	}
@@ -407,7 +407,7 @@ void octo_loa_stats_msg(octo_dict_loa_t *dict)
 	octo_stat_loa_t *output = calloc(1, sizeof(*output));
 	if(output == NULL)
 	{
-		DEBUG_MSG("malloc failed while allocating octo_stat_cll_t");
+		DEBUG_MSG("malloc failed while allocating octo_stat_loa_t");
 		errno = ENOMEM;
 		return;
 	}
@@ -437,7 +437,7 @@ void octo_loa_stats_msg(octo_dict_loa_t *dict)
 		return;
 	}
 	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
-	printf("\n######## libocto octo_dict_cll_t statistics summary ########\n");
+	printf("\n######## libocto octo_dict_loa_t statistics summary ########\n");
 	printf("virtual address:%44llu\n", (unsigned long long)dict);
 	printf("total entries:%46llu\n", (unsigned long long)output->total_entries);
 	printf("empty buckets:%47llu\n", (unsigned long long)output->empty_buckets);
