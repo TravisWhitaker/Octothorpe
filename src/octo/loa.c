@@ -126,7 +126,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	//Is the bucket occupied? If so, did we find the key?
 	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
-		void *output = malloc(sizeof(dict->vallen));
+		void *output = malloc(dict->vallen);
 		if(output == NULL)
 		{
 			DEBUG_MSG("key found, but malloc failed");
