@@ -292,7 +292,11 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 			next = *((void **)this);
 			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
 			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
-			octo_cll_insert(key_buffer, val_buffer, output);
+			if(octo_cll_insert(key_buffer, val_buffer, output) == 1)
+			{
+				DEBUG_MSG("octo_cll_insert() failed during rehash, lazy rehash used, data is unrecoverable");
+				return NULL;
+			}
 			free(this);
 			this = next;
 		}
@@ -383,7 +387,11 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 			next = *((void **)this);
 			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
 			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
-			octo_cll_insert(key_buffer, val_buffer, output);
+			if(octo_cll_insert(key_buffer, val_buffer, output) == 1)
+			{
+				DEBUG_MSG("octo_cll_insert() failed during rehash, original cll_dict in known-good state");
+				return NULL;
+			}
 			this = next;
 		}
 	}
