@@ -195,7 +195,7 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 }
 
 // Re-create the loa_dict with a new key length, value length(both will be truncated), number of buckets,
-// and/or new master_key. Return pointer to new cll_dict on success, NULL on failure:
+// and/or new master_key. Return pointer to new loa_dict on success, NULL on failure:
 octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -326,7 +326,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_cll_delete(output);
+		octo_loa_delete(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
