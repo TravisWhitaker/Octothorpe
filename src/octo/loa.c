@@ -362,52 +362,36 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 	free(val_buffer);
 	return output;
 }
-// Populate and return a pointer to a octo_stat_loa_t on success, NULL on error:
-octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
+// Populate and return a pointer to an octo_stat_loa_t on success, NULL on error:
+octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 {
-	octo_stat_cll_t *output = calloc(1, sizeof(octo_stat_cll_t));
-	void *this;
-	void *next;
-	uint64_t current_chain_len;
+	octo_stat_loa_t *output = calloc(1, sizeof(*output));
 	if(output == NULL)
 	{
 		DEBUG_MSG("malloc failed while allocating octo_stat_cll_t");
 		errno = ENOMEM;
 		return NULL;
 	}
+	uint64_t hash;
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*(dict->buckets + i) == NULL)
+		if((char)*(dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
-			output->null_buckets++;
+			output->empty_buckets++;
 			continue;
 		}
-		else if(*(void **)*(dict->buckets + i) == NULL)
+		output->total_entries++;
+		octo_hash(dict->buckets + (i * (dict->cellen + 1)) + 1, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+		if(i == hash % dict->bucket_count)
 		{
 			output->optimal_buckets++;
-			output->total_entries++;
-			continue;
 		}
-		output->chained_buckets++;
-		this = *(dict->buckets + i);
-		current_chain_len = 0;
-		while(this != NULL)
+		else
 		{
-			next = *((void **)this);
-			current_chain_len++;
-			output->total_entries++;
-			this = next;
-		}
-		if(current_chain_len > output->max_chain_len)
-		{
-			output->max_chain_len = current_chain_len;
+			output->colliding_buckets++;
 		}
 	}
-	if(output->max_chain_len == 0)
-	{
-		output->max_chain_len = 1;
-	}
-	if((output->null_buckets + output->optimal_buckets + output->chained_buckets) != dict->bucket_count)
+	if((output->empty_buckets + output->optimal_buckets + output->colliding_buckets) != dict->bucket_count)
 	{
 		DEBUG_MSG("sum of bucket types not equal to bucket count");
 		free(output);
@@ -417,52 +401,36 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 	return output;
 }
 
-// Print out a summary of octo_stat_cll_t for debugging purposes:
-void octo_cll_stats_msg(octo_dict_cll_t *dict)
+// Print out a summary of octo_stat_loa_t for debugging purposes:
+void octo_loa_stats_msg(octo_dict_loa_t *dict)
 {
-	octo_stat_cll_t *output = calloc(1, sizeof(octo_stat_cll_t));
-	void *this;
-	void *next;
-	uint64_t current_chain_len;
+	octo_stat_loa_t *output = calloc(1, sizeof(*output));
 	if(output == NULL)
 	{
 		DEBUG_MSG("malloc failed while allocating octo_stat_cll_t");
 		errno = ENOMEM;
 		return;
 	}
+	uint64_t hash;
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*(dict->buckets + i) == NULL)
+		if((char)*(dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
-			output->null_buckets++;
+			output->empty_buckets++;
 			continue;
 		}
-		else if(*((void **)*(dict->buckets + i)) == NULL)
+		output->total_entries++;
+		octo_hash(dict->buckets + (i * (dict->cellen + 1)) + 1, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+		if(i == hash % dict->bucket_count)
 		{
 			output->optimal_buckets++;
-			output->total_entries++;
-			continue;
 		}
-		output->chained_buckets++;
-		this = *(dict->buckets + i);
-		current_chain_len = 0;
-		while(this != NULL)
+		else
 		{
-			next = *((void **)this);
-			current_chain_len++;
-			output->total_entries++;
-			this = next;
-		}
-		if(current_chain_len > output->max_chain_len)
-		{
-			output->max_chain_len = current_chain_len;
+			output->colliding_buckets++;
 		}
 	}
-	if(output->max_chain_len == 0)
-	{
-		output->max_chain_len = 1;
-	}
-	if((output->null_buckets + output->optimal_buckets + output->chained_buckets) != dict->bucket_count)
+	if((output->empty_buckets + output->optimal_buckets + output->colliding_buckets) != dict->bucket_count)
 	{
 		DEBUG_MSG("sum of bucket types not equal to bucket count");
 		free(output);
@@ -472,10 +440,9 @@ void octo_cll_stats_msg(octo_dict_cll_t *dict)
 	printf("\n######## libocto octo_dict_cll_t statistics summary ########\n");
 	printf("virtual address:%44llu\n", (unsigned long long)dict);
 	printf("total entries:%46llu\n", (unsigned long long)output->total_entries);
-	printf("null buckets:%47llu\n", (unsigned long long)output->null_buckets);
+	printf("empty buckets:%47llu\n", (unsigned long long)output->empty_buckets);
 	printf("optimal buckets:%44llu\n", (unsigned long long)output->optimal_buckets);
-	printf("chained buckets:%44llu\n", (unsigned long long)output->chained_buckets);
-	printf("longest chain:%46llu\n", (unsigned long long)output->max_chain_len);
+	printf("colliding buckets:%44llu\n", (unsigned long long)output->colliding_buckets);
 	printf("load factor:%48Lf\n", output->load);
 	printf("############################################################\n\n");
 	free(output);
