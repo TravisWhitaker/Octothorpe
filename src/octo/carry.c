@@ -550,7 +550,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 // Populate and return a pointer to a octo_stat_carry_t on success, NULL on error:
 octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
 {
-	octo_stat_carry_t *output = calloc(1, sizeof(octo_stat_carry_t));
+	octo_stat_carry_t *output = calloc(1, sizeof(*output));
 	if(output == NULL)
 	{
 		DEBUG_MSG("malloc failed while allocating octo_stat_carry_t");
@@ -595,7 +595,7 @@ octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
 // Print out a summary of octo_stat_carry_t for debugging purposes:
 void octo_carry_stats_msg(octo_dict_carry_t *dict)
 {
-	octo_stat_carry_t *output = calloc(1, sizeof(octo_stat_carry_t));
+	octo_stat_carry_t *output = calloc(1, sizeof(*output));
 	if(output == NULL)
 	{
 		DEBUG_MSG("malloc failed while allocating octo_stat_carry_t");

@@ -403,7 +403,7 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 // Populate and return a pointer to a octo_stat_cll_t on success, NULL on error:
 octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 {
-	octo_stat_cll_t *output = calloc(1, sizeof(octo_stat_cll_t));
+	octo_stat_cll_t *output = calloc(1, sizeof(*output));
 	void *this;
 	void *next;
 	uint64_t current_chain_len;
@@ -458,7 +458,7 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 // Print out a summary of octo_stat_cll_t for debugging purposes:
 void octo_cll_stats_msg(octo_dict_cll_t *dict)
 {
-	octo_stat_cll_t *output = calloc(1, sizeof(octo_stat_cll_t));
+	octo_stat_cll_t *output = calloc(1, sizeof(*output));
 	void *this;
 	void *next;
 	uint64_t current_chain_len;
