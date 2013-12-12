@@ -279,9 +279,9 @@ octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen,
 	return output;
 }
 
-// Like octo_cll_rehash, but retain the original dict. It is up to the caller
+// Like octo_loa_rehash, but retain the original dict. It is up to the caller
 // to free the old dict:
-octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
+octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
 	if(new_keylen <= 0)
@@ -298,7 +298,7 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	}
 
 	// Allocate the new dict and populate trivial fields:
-	octo_dict_cll_t *output = malloc(sizeof(*output));
+	octo_dict_loa_t *output = malloc(sizeof(*output));
 	if(output == NULL)
 	{
 		DEBUG_MSG("malloc failed allocating *output");
@@ -331,41 +331,35 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
 	size_t buffer_vallen = dict->vallen < output->vallen ? dict->vallen : output->vallen;
 
-	// Allocate the new array of bucket pointers, initializing them to NULL:
-	void **buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
+	// Allocate the new array of buckets:
+	void *buckets_tmp = calloc(new_buckets, sizeof(*buckets_tmp));
 	if(buckets_tmp == NULL)
 	{
-		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		DEBUG_MSG("unable to malloc for *buckets_tmp");
 		errno = ENOMEM;
 		free(output);
 		return NULL;
 	}
 	output->buckets = buckets_tmp;
-	void *this = NULL;
-	void *next = NULL;
-	// There's no pre-allocation to do, so simply find every key/val
-	// in the dict and insert:
+
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*(dict->buckets + i) == NULL)
+		if((char)*(dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
 			continue;
 		}
-		this = *(dict->buckets + i);
-		while(this != NULL)
+		memcpy(key_buffer, dict->buckets + (i * (dict->cellen + 1)) + 1, buffer_keylen);
+		memcpy(val_buffer, dict->buckets + (i * (dict->cellen + 1)) + 1 + dict->keylen, buffer_vallen);
+		if(octo_loa_insert(key_buffer, val_buffer, output) == 1)
 		{
-			next = *((void **)this);
-			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
-			octo_cll_insert(key_buffer, val_buffer, output);
-			this = next;
+			DEBUG_MSG("octo_loa_insert failed, original dict in known-good state");
+			return NULL;
 		}
 	}
 	free(key_buffer);
 	free(val_buffer);
 	return output;
 }
-
 // Populate and return a pointer to a octo_stat_cll_t on success, NULL on error:
 octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 {
