@@ -162,31 +162,34 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	return (void *)dict;
 }
 
-// Like octo_cll_fetch, but don't malloc/memcpy the value.
+// Like octo_loa_fetch, but don't malloc/memcpy the value.
 // Return 1 if found, 0 if not:
-int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
+int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
-	// If there's nothing in the bucket, the value isn't in the dict:
-	if(*(dict->buckets + index) == NULL)
+	//Is the bucket occupied? If so, did we find the key?
+	if((char)*(dict->buckets + index) == 0xff && memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
 	{
-		return 0;
+		return 1;
 	}
-
-	void *this = *(dict->buckets + index);
-	void *next = NULL;
-	while(this != NULL)
+	
+	uint64_t atmpt = 1;
+	while(atmpt < dict->bucket_count)
 	{
-		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		index = index < (dict->buckets + dict->bucket_count) ? index + 1 : 0;
+		if((char)*(dict->buckets + index) == 0)
+		{
+			return 0;
+		}
+		if(memcmp(key, dict->buckets + index + 1, key, dict->keylen) == 0)
 		{
 			return 1;
 		}
-		this = next;
+		atmpt++;
 	}
 	return 0;
 }
