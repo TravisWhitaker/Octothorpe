@@ -68,7 +68,7 @@ octo_dict_cll_t *octo_cll_init(const size_t init_keylen, const size_t init_valle
 }
 
 // Delete a cll_dict:
-void octo_cll_delete(octo_dict_cll_t *target)
+void octo_cll_free(octo_dict_cll_t *target)
 {
 	void *this = NULL;
 	void *next = NULL;
@@ -260,7 +260,7 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_cll_delete(output);
+		octo_cll_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -355,7 +355,7 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_cll_delete(output);
+		octo_cll_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;

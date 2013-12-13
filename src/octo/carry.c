@@ -90,7 +90,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 }
 
 // Delete a carry_dict:
-void octo_carry_delete(octo_dict_carry_t *target)
+void octo_carry_free(octo_dict_carry_t *target)
 {
 	for(uint64_t i = 0; i < target->bucket_count; i++)
 	{
@@ -264,7 +264,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_carry_delete(output);
+		octo_carry_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -298,7 +298,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 				{
 					DEBUG_MSG("malloc failed while allocating new bucket");
 					errno = ENOMEM;
-					octo_carry_delete(output);
+					octo_carry_free(output);
 					return NULL;
 				}
 				*((uint8_t *)*(output->buckets + index)) = 1;
@@ -329,7 +329,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 						if(*((uint8_t *)*(output->buckets + index)) == 255)
 						{
 							DEBUG_MSG("unmanageable collision");
-							octo_carry_delete(output);
+							octo_carry_free(output);
 							free(key_buffer);
 							free(val_buffer);
 							return NULL;
@@ -339,7 +339,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 						{
 							DEBUG_MSG("realloc failed during rehash");
 							errno = ENOMEM;
-							octo_carry_delete(output);
+							octo_carry_free(output);
 							free(key_buffer);
 							free(val_buffer);
 							return NULL;
@@ -371,7 +371,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 			{
 				DEBUG_MSG("malloc failed while finalizing new carry_dict; lazy rehash was used, data is unrecoverable");
 				errno = ENOMEM;
-				octo_carry_delete(output);
+				octo_carry_free(output);
 				return NULL;
 			}
 			*((uint8_t *)*(output->buckets + i)) = 0;
@@ -433,7 +433,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_carry_delete(output);
+		octo_carry_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -467,7 +467,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 				{
 					DEBUG_MSG("malloc failed while allocating new bucket");
 					errno = ENOMEM;
-					octo_carry_delete(output);
+					octo_carry_free(output);
 					return NULL;
 				}
 				*((uint8_t *)*(output->buckets + index)) = 1;
@@ -498,7 +498,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 						if(*((uint8_t *)*(output->buckets + index)) == 255)
 						{
 							DEBUG_MSG("unmanageable collision");
-							octo_carry_delete(output);
+							octo_carry_free(output);
 							free(key_buffer);
 							free(val_buffer);
 							return NULL;
@@ -508,7 +508,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 						{
 							DEBUG_MSG("realloc failed during rehash");
 							errno = ENOMEM;
-							octo_carry_delete(output);
+							octo_carry_free(output);
 							free(key_buffer);
 							free(val_buffer);
 							return NULL;
@@ -537,7 +537,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 			{
 				DEBUG_MSG("malloc failed while finalizing new carry_dict; lazy rehash was used, data is unrecoverable");
 				errno = ENOMEM;
-				octo_carry_delete(output);
+				octo_carry_free(output);
 				return NULL;
 			}
 			*((uint8_t *)*(output->buckets + i)) = 0;

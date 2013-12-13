@@ -59,7 +59,7 @@ octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_valle
 }
 
 // Delete a loa_dict:
-void octo_loa_delete(octo_dict_loa_t *target)
+void octo_loa_free(octo_dict_loa_t *target)
 {
 	free(target->buckets);
 	free(target);
@@ -240,7 +240,7 @@ octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen,
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_loa_delete(output);
+		octo_loa_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -268,7 +268,7 @@ octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen,
 		if(octo_loa_insert(key_buffer, val_buffer, output) == 1)
 		{
 			DEBUG_MSG("octo_loa_insert failed, data may be recoverable");
-			octo_loa_delete(output);
+			octo_loa_free(output);
 			return NULL;
 		}
 	}
@@ -326,7 +326,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_loa_delete(output);
+		octo_loa_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -354,7 +354,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 		if(octo_loa_insert(key_buffer, val_buffer, output) == 1)
 		{
 			DEBUG_MSG("octo_loa_insert failed, original dict in known-good state");
-			octo_loa_delete(output);
+			octo_loa_free(output);
 			return NULL;
 		}
 	}

@@ -23,7 +23,7 @@ typedef struct
 } octo_stat_loa_t;
 
 octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t *init_master_key);
-void octo_loa_delete(octo_dict_loa_t *target);
+void octo_loa_free(octo_dict_loa_t *target);
 int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *dict);
 void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict);
 int octo_loa_poke(const void *key, const octo_dict_loa_t *dict);

@@ -192,7 +192,7 @@ int main()
 	printf("test_cll: \"Safely\" rehashing dict...\n");
 	octo_dict_cll_t *test_cll_safe = octo_cll_rehash_safe(test_cll, test_cll->keylen, test_cll->vallen, 4096, new_master_key);
 	printf("test_cll: Deleting old dict...\n");
-	octo_cll_delete(test_cll);
+	octo_cll_free(test_cll);
 	octo_cll_stats_msg(test_cll_safe);
 	printf("test_cll: Poking inserted records...\n");
 	if(!(octo_cll_poke(key1, (const octo_dict_cll_t *)test_cll_safe)))
@@ -267,7 +267,7 @@ int main()
 		return 1;
 	}
 	printf("test_cll: Deleting cll_dict...\n");
-	octo_cll_delete(test_cll_safe);
+	octo_cll_free(test_cll_safe);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_cll: SUCCESS!\n");

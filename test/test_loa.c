@@ -192,7 +192,7 @@ int main()
 	printf("test_loa: \"Safely\" rehashing dict...\n");
 	octo_dict_loa_t *test_loa_safe = octo_loa_rehash_safe(test_loa, test_loa->keylen, test_loa->vallen, 4096, new_master_key);
 	printf("test_loa: Deleting old dict...\n");
-	octo_loa_delete(test_loa);
+	octo_loa_free(test_loa);
 	octo_loa_stats_msg(test_loa_safe);
 	printf("test_loa: Poking inserted records...\n");
 	if(!(octo_loa_poke(key1, (const octo_dict_loa_t *)test_loa_safe)))
@@ -267,7 +267,7 @@ int main()
 		return 1;
 	}
 	printf("test_loa: Deleting loa_dict...\n");
-	octo_loa_delete(test_loa_safe);
+	octo_loa_free(test_loa_safe);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_loa: SUCCESS!\n");

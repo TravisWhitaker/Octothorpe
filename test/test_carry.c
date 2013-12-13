@@ -192,7 +192,7 @@ int main()
 	printf("test_carry: \"Safely\" rehashing dict...\n");
 	octo_dict_carry_t *test_carry_safe = octo_carry_rehash_safe(test_carry, test_carry->keylen, test_carry->vallen, 4096, 3, new_master_key);
 	printf("test_carry: Deleting old dict...\n");
-	octo_carry_delete(test_carry);
+	octo_carry_free(test_carry);
 	octo_carry_stats_msg(test_carry_safe);
 	printf("test_carry: Poking inserted records...\n");
 	if(!(octo_carry_poke(key1, (const octo_dict_carry_t *)test_carry_safe)))
@@ -267,7 +267,7 @@ int main()
 		return 1;
 	}
 	printf("test_carry: Deleting carry_dict...\n");
-	octo_carry_delete(test_carry_safe);
+	octo_carry_free(test_carry_safe);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_carry: SUCCESS!\n");

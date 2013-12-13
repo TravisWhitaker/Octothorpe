@@ -24,7 +24,7 @@ typedef struct
 } octo_stat_cll_t;
 
 octo_dict_cll_t *octo_cll_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t *init_master_key);
-void octo_cll_delete(octo_dict_cll_t *target);
+void octo_cll_free(octo_dict_cll_t *target);
 int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *dict);
 void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict);
 int octo_cll_poke(const void *key, const octo_dict_cll_t *dict);
