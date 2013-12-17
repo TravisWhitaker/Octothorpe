@@ -24,9 +24,10 @@ typedef struct
 } octo_stat_carry_t;
 
 octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t init_tolerance, const uint8_t *init_master_key);
-void octo_carry_delete(octo_dict_carry_t *target);
+void octo_carry_free(octo_dict_carry_t *target);
 int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_t *dict);
 void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict);
+void *octo_carry_fetch_safe(const void *key, const octo_dict_carry_t *dict);
 int octo_carry_poke(const void *key, const octo_dict_carry_t *dict);
 octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key);
 octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key);

@@ -68,7 +68,7 @@ octo_dict_cll_t *octo_cll_init(const size_t init_keylen, const size_t init_valle
 }
 
 // Delete a cll_dict:
-void octo_cll_delete(octo_dict_cll_t *target)
+void octo_cll_free(octo_dict_cll_t *target)
 {
 	void *this = NULL;
 	void *next = NULL;
@@ -149,8 +149,38 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 }
 
 // Fetch a value from a cll_dict. Return NULL on error, return a pointer to
-// the cll_dict itself if the value is not found:
+// the cll_dict itself if the value is not found. The pointer referes to the
+// literal location of the value; if you don't want that, use *fetch_safe:
 void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+
+	// If there's nothing in the bucket, the value isn't in the dict:
+	if(*(dict->buckets + index) == NULL)
+	{
+		return (void *)dict;
+	}
+
+	void *this = *(dict->buckets + index);
+	void *next = NULL;
+	while(this != NULL)
+	{
+		next = *((void **)this);
+		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		{
+			return (char *)this + sizeof(void *) + dict->keylen;
+		}
+		this = next;
+	}
+	return (void *)dict;
+}
+
+// Fetch a value from a cll_dict. Return NULL on error, return a pointer to
+// the cll_dict itself if the value is not found:
+void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
@@ -260,7 +290,7 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_cll_delete(output);
+		octo_cll_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
@@ -355,7 +385,7 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	{
 		DEBUG_MSG("malloc failed while allocating key/val buffer");
 		errno = ENOMEM;
-		octo_cll_delete(output);
+		octo_cll_free(output);
 		return NULL;
 	}
 	size_t buffer_keylen = dict->keylen < output->keylen ? dict->keylen : output->keylen;
