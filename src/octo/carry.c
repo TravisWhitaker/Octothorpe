@@ -159,8 +159,32 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 }
 
 // Fetch a value from a carry_dict. Return NULL on error, return a pointer to
-// the carry_dict itself if the value is not found:
+// the carry_dict itself if the value is not found. The pointer referes to the
+// literal location of the value; if you don't want that, use *fetch_safe:
 void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+	// If there's nothing in the bucket, the value isn't in the dict:
+	if(*((uint8_t *)*(dict->buckets + index)) == 0)
+	{
+		return (void *)dict;
+	}
+	for(uint8_t i = 0; i < *((uint8_t *)*(dict->buckets + index)); i++)
+	{
+		if(memcmp(key, (uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i), dict->keylen) == 0)
+		{
+			return (uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i) + dict->keylen;
+		}
+	}
+	return (void *)dict;
+}
+
+// Fetch a value from a carry_dict. Return NULL on error, return a pointer to
+// the carry_dict itself if the value is not found:
+void *octo_carry_fetch_safe(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
