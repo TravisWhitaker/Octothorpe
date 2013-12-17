@@ -8,23 +8,23 @@ INCLUDE= -I../include
 LFLAGS = -L../ -locto
 
 .PHONY: all
-all: keygen_test carry_test cll_test loa_test
-	./keygen_test
-	./carry_test
-	./cll_test
-	./loa_test
+all: keygen_unit carry_unit cll_unit loa_unit
+	./keygen_unit
+	./carry_unit
+	./cll_unit
+	./loa_unit
 
-keygen_test: unit_keygen.c
-	$(CC) $(INCLUDE) -o keygen_test $(CFLAGS) unit_keygen.c $(LFLAGS)
+keygen_unit: unit_keygen.c
+	$(CC) $(INCLUDE) -o keygen_unit $(CFLAGS) unit_keygen.c $(LFLAGS)
 
-carry_test: unit_carry.c
-	$(CC) $(INCLUDE) -o carry_test  $(CFLAGS) unit_carry.c $(LFLAGS)
+carry_unit: unit_carry.c
+	$(CC) $(INCLUDE) -o carry_unit  $(CFLAGS) unit_carry.c $(LFLAGS)
 
-cll_test: unit_cll.c
-	$(CC) $(INCLUDE) -o cll_test $(CFLAGS) unit_cll.c $(LFLAGS)
+cll_unit: unit_cll.c
+	$(CC) $(INCLUDE) -o cll_unit $(CFLAGS) unit_cll.c $(LFLAGS)
 
-loa_test: unit_loa.c
-	$(CC) $(INCLUDE) -o loa_test $(CFLAGS) unit_loa.c $(LFLAGS)
+loa_unit: unit_loa.c
+	$(CC) $(INCLUDE) -o loa_unit $(CFLAGS) unit_loa.c $(LFLAGS)
 
 .PHONY: debug
 debug: keygen_unit_debug carry_unit_debug cll_unit_debug loa_unit_debug
@@ -49,4 +49,4 @@ loa_unit_debug: unit_loa.c
 clean:
 	rm -f *.o
 	rm -f *.o.debug
-	rm -f *_test*
+	rm -f *_unit*
