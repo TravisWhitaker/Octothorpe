@@ -115,8 +115,49 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 }
 
 // Fetch a value from a loa_dict. Return NULL on error, return a pointer to
-// the loa_dict itself if the value is not found:
+// the loa_dict itself if the value is not found. The pointer referes to the
+// literal location of the value; if you don't want that, use *fetch_safe:
 void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+
+	//Is the bucket occupied? If so, did we find the key?
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	{
+		void *output = malloc(dict->vallen);
+		if(output == NULL)
+		{
+			DEBUG_MSG("key found, but malloc failed");
+			errno = ENOMEM;
+			return NULL;
+		}
+		memcpy(output, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, dict->vallen);
+		return output;
+	}
+	
+	uint64_t atmpt = 1;
+	while(atmpt <= dict->bucket_count)
+	{
+		index = index + 1 < dict->bucket_count ? index + 1 : 0;
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+		{
+			return (void *)dict;
+		}
+		if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+		{
+			return (char *)dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen;
+		}
+		atmpt++;
+	}
+	return (void *)dict;
+}
+
+// Fetch a value from a loa_dict. Return NULL on error, return a pointer to
+// the loa_dict itself if the value is not found:
+void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;

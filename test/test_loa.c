@@ -68,10 +68,10 @@ int main()
 		printf("test_loa: FAILED: octo_loa_poke found non-existent key\n");
 		return 1;
 	}
-	printf("test_loa: Fetching inserted records...\n");
-	void *output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa);
-	void *output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa);
-	void *output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa);
+	printf("test_loa: Fetching inserted records \"safely\"...\n");
+	void *output1 = octo_loa_fetch_safe(key1, (const octo_dict_loa_t *)test_loa);
+	void *output2 = octo_loa_fetch_safe(key2, (const octo_dict_loa_t *)test_loa);
+	void *output3 = octo_loa_fetch_safe(key3, (const octo_dict_loa_t *)test_loa);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
 		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
@@ -101,6 +101,36 @@ int main()
 	free(output1);
 	free(output2);
 	free(output3);
+	printf("test_loa: Fetching inserted records \"unsafely\"...\n");
+	output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa);
+	output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa);
+	output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_loa || output2 == (void *)test_loa || output3 == (void *)test_loa)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_loa: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
 	printf("test_loa: Looking up non-existent key...\n");
 	void *error_output = octo_loa_fetch("zxcvbde\0", (const octo_dict_loa_t *)test_loa);
 	if(error_output == NULL)
@@ -139,10 +169,10 @@ int main()
 		printf("test_loa: FAILED: octo_loa_poke found non-existent key\n");
 		return 1;
 	}
-	printf("test_loa: Fetching inserted records...\n");
-	output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa);
-	output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa);
-	output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa);
+	printf("test_loa: Fetching inserted records \"safely\"...\n");
+	output1 = octo_loa_fetch_safe(key1, (const octo_dict_loa_t *)test_loa);
+	output2 = octo_loa_fetch_safe(key2, (const octo_dict_loa_t *)test_loa);
+	output3 = octo_loa_fetch_safe(key3, (const octo_dict_loa_t *)test_loa);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
 		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
@@ -172,6 +202,36 @@ int main()
 	free(output1);
 	free(output2);
 	free(output3);
+	printf("test_loa: Fetching inserted records \"unsafely\"...\n");
+	output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa);
+	output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa);
+	output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_loa || output2 == (void *)test_loa || output3 == (void *)test_loa)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_loa: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
 	printf("test_loa: Looking up non-existent key...\n");
 	error_output = octo_loa_fetch("zxcvbde\n", (const octo_dict_loa_t *)test_loa);
 	if(error_output == NULL)
@@ -216,10 +276,10 @@ int main()
 		printf("test_loa: FAILED: octo_loa_poke found non-existent key\n");
 		return 1;
 	}
-	printf("test_loa: Fetching inserted records...\n");
-	output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa_safe);
-	output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa_safe);
-	output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa_safe);
+	printf("test_loa: Fetching inserted records \"safely\"...\n");
+	output1 = octo_loa_fetch_safe(key1, (const octo_dict_loa_t *)test_loa_safe);
+	output2 = octo_loa_fetch_safe(key2, (const octo_dict_loa_t *)test_loa_safe);
+	output3 = octo_loa_fetch_safe(key3, (const octo_dict_loa_t *)test_loa_safe);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
 		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
@@ -249,6 +309,36 @@ int main()
 	free(output1);
 	free(output2);
 	free(output3);
+	printf("test_loa: Fetching inserted records \"unsafely\"...\n");
+	output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa_safe);
+	output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa_safe);
+	output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa_safe);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_loa_safe || output2 == (void *)test_loa_safe || output3 == (void *)test_loa_safe)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_loa: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
 	printf("test_loa: Looking up non-existent key...\n");
 	error_output = octo_loa_fetch("zxcvbde\n", (const octo_dict_loa_t *)test_loa_safe);
 	if(error_output == NULL)
