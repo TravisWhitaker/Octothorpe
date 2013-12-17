@@ -85,17 +85,17 @@ int main()
 	printf("test_carry: Checking for correct values...\n");
 	if(memcmp(val1, output1, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val2, output2, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val3, output3, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
 	free(output1);
@@ -186,17 +186,17 @@ int main()
 	printf("test_carry: Checking for correct values...\n");
 	if(memcmp(val1, output1, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val2, output2, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val3, output3, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
 	free(output1);
@@ -293,17 +293,17 @@ int main()
 	printf("test_carry: Checking for correct values...\n");
 	if(memcmp(val1, output1, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val2, output2, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val3, output3, 64) != 0)
 	{
-		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
 	free(output1);

@@ -74,28 +74,28 @@ int main()
 	void *output3 = octo_cll_fetch_safe(key3, (const octo_dict_cll_t *)test_cll);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned NULL\n");
 		return 1;
 	}
 	if(output1 == (void *)test_cll || output2 == (void *)test_cll || output3 == (void *)test_cll)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch couldn't find test value\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe couldn't find test value\n");
 		return 1;
 	}
 	printf("test_cll: Checking for correct values...\n");
 	if(memcmp(val1, output1, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val2, output2, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val3, output3, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
 	free(output1);
@@ -175,28 +175,28 @@ int main()
 	output3 = octo_cll_fetch_safe(key3, (const octo_dict_cll_t *)test_cll);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned NULL\n");
 		return 1;
 	}
 	if(output1 == (void *)test_cll || output2 == (void *)test_cll || output3 == (void *)test_cll)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch couldn't find test value\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe couldn't find test value\n");
 		return 1;
 	}
 	printf("test_cll: Checking for correct values...\n");
 	if(memcmp(val1, output1, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val2, output2, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val3, output3, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
 	free(output1);
@@ -282,28 +282,28 @@ int main()
 	output3 = octo_cll_fetch_safe(key3, (const octo_dict_cll_t *)test_cll_safe);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned NULL\n");
 		return 1;
 	}
 	if(output1 == (void *)test_cll_safe || output2 == (void *)test_cll_safe || output3 == (void *)test_cll_safe)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch couldn't find test value\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe couldn't find test value\n");
 		return 1;
 	}
 	printf("test_cll: Checking for correct values...\n");
 	if(memcmp(val1, output1, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val2, output2, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
 		return 1;
 	}
 	if(memcmp(val3, output3, 64) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		printf("test_cll: FAILED: octo_cll_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
 	free(output1);
