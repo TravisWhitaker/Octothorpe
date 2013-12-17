@@ -68,10 +68,43 @@ int main()
 		printf("test_carry: FAILED: octo_carry_poke found non-existent key\n");
 		return 1;
 	}
-	printf("test_carry: Fetching inserted records...\n");
-	void *output1 = octo_carry_fetch(key1, (const octo_dict_carry_t *)test_carry);
-	void *output2 = octo_carry_fetch(key2, (const octo_dict_carry_t *)test_carry);
-	void *output3 = octo_carry_fetch(key3, (const octo_dict_carry_t *)test_carry);
+	printf("test_carry: Fetching inserted records \"safely\"...\n");
+	void *output1 = octo_carry_fetch_safe(key1, (const octo_dict_carry_t *)test_carry);
+	void *output2 = octo_carry_fetch_safe(key2, (const octo_dict_carry_t *)test_carry);
+	void *output3 = octo_carry_fetch_safe(key3, (const octo_dict_carry_t *)test_carry);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_carry || output2 == (void *)test_carry || output3 == (void *)test_carry)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
+	free(output1);
+	free(output2);
+	free(output3);
+	printf("test_carry: Fetching inserted records \"unsafely\"...\n");
+	output1 = octo_carry_fetch(key1, (const octo_dict_carry_t *)test_carry);
+	output2 = octo_carry_fetch(key2, (const octo_dict_carry_t *)test_carry);
+	output3 = octo_carry_fetch(key3, (const octo_dict_carry_t *)test_carry);
 	if(output1 == NULL || output2 == NULL || output3 == NULL)
 	{
 		printf("test_carry: FAILED: octo_carry_fetch returned NULL\n");
@@ -98,9 +131,6 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	free(output1);
-	free(output2);
-	free(output3);
 	printf("test_carry: Looking up non-existent key...\n");
 	void *error_output = octo_carry_fetch("zxcvbde\0", (const octo_dict_carry_t *)test_carry);
 	if(error_output == NULL)
@@ -139,7 +169,40 @@ int main()
 		printf("test_carry: FAILED: octo_carry_poke found non-existent key\n");
 		return 1;
 	}
-	printf("test_carry: Fetching inserted records...\n");
+	printf("test_carry: Fetching inserted records \"safely\"...\n");
+	output1 = octo_carry_fetch_safe(key1, (const octo_dict_carry_t *)test_carry);
+	output2 = octo_carry_fetch_safe(key2, (const octo_dict_carry_t *)test_carry);
+	output3 = octo_carry_fetch_safe(key3, (const octo_dict_carry_t *)test_carry);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_carry || output2 == (void *)test_carry || output3 == (void *)test_carry)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
+	free(output1);
+	free(output2);
+	free(output3);
+	printf("test_carry: Fetching inserted records \"unsafely\"...\n");
 	output1 = octo_carry_fetch(key1, (const octo_dict_carry_t *)test_carry);
 	output2 = octo_carry_fetch(key2, (const octo_dict_carry_t *)test_carry);
 	output3 = octo_carry_fetch(key3, (const octo_dict_carry_t *)test_carry);
@@ -169,9 +232,6 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	free(output1);
-	free(output2);
-	free(output3);
 	printf("test_carry: Looking up non-existent key...\n");
 	error_output = octo_carry_fetch("zxcvbde\n", (const octo_dict_carry_t *)test_carry);
 	if(error_output == NULL)
@@ -192,7 +252,7 @@ int main()
 	printf("test_carry: \"Safely\" rehashing dict...\n");
 	octo_dict_carry_t *test_carry_safe = octo_carry_rehash_safe(test_carry, test_carry->keylen, test_carry->vallen, 4096, 3, new_master_key);
 	printf("test_carry: Deleting old dict...\n");
-	octo_carry_delete(test_carry);
+	octo_carry_free(test_carry);
 	octo_carry_stats_msg(test_carry_safe);
 	printf("test_carry: Poking inserted records...\n");
 	if(!(octo_carry_poke(key1, (const octo_dict_carry_t *)test_carry_safe)))
@@ -216,7 +276,40 @@ int main()
 		printf("test_carry: FAILED: octo_carry_poke found non-existent key\n");
 		return 1;
 	}
-	printf("test_carry: Fetching inserted records...\n");
+	printf("test_carry: Fetching inserted records \"safely\"...\n");
+	output1 = octo_carry_fetch_safe(key1, (const octo_dict_carry_t *)test_carry_safe);
+	output2 = octo_carry_fetch_safe(key2, (const octo_dict_carry_t *)test_carry_safe);
+	output3 = octo_carry_fetch_safe(key3, (const octo_dict_carry_t *)test_carry_safe);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_carry_safe || output2 == (void *)test_carry_safe || output3 == (void *)test_carry_safe)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch_safe returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
+	free(output1);
+	free(output2);
+	free(output3);
+	printf("test_carry: Fetching inserted records \"unsafely\"...\n");
 	output1 = octo_carry_fetch(key1, (const octo_dict_carry_t *)test_carry_safe);
 	output2 = octo_carry_fetch(key2, (const octo_dict_carry_t *)test_carry_safe);
 	output3 = octo_carry_fetch(key3, (const octo_dict_carry_t *)test_carry_safe);
@@ -246,9 +339,6 @@ int main()
 		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	free(output1);
-	free(output2);
-	free(output3);
 	printf("test_carry: Looking up non-existent key...\n");
 	error_output = octo_carry_fetch("zxcvbde\n", (const octo_dict_carry_t *)test_carry_safe);
 	if(error_output == NULL)
@@ -267,7 +357,7 @@ int main()
 		return 1;
 	}
 	printf("test_carry: Deleting carry_dict...\n");
-	octo_carry_delete(test_carry_safe);
+	octo_carry_free(test_carry_safe);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_carry: SUCCESS!\n");
