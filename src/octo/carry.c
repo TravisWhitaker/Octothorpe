@@ -658,7 +658,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 		return;
 	}
 	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
-	printf("\n######## libocto octo_dict_carry_t statistics summary ########\n");
+	printf("######## libocto octo_dict_carry_t statistics summary ########\n");
 	printf("virtual address:%46llu\n", (unsigned long long)dict);
 	printf("total entries:%48llu\n", (unsigned long long)output->total_entries);
 	printf("empty buckets:%48llu\n", (unsigned long long)output->empty_buckets);
@@ -666,7 +666,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 	printf("colliding buckets:%44llu\n", (unsigned long long)output->colliding_buckets);
 	printf("largest bucket:%47u\n", output->max_bucket_elements);
 	printf("load factor:%50Lf\n", output->load);
-	printf("##############################################################\n\n");
+	printf("##############################################################\n");
 	free(output);
 	return;
 }
