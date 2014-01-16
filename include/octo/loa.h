@@ -28,6 +28,7 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict);
 void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict);
 int octo_loa_poke(const void *key, const octo_dict_loa_t *dict);
+int octo_loa_delete(const void *key, const octo_dict_loa_t *dict);
 octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key);
 octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key);
 octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict);
