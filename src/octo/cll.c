@@ -281,7 +281,14 @@ int octo_cll_delete(const void *key, const octo_dict_cll_t *dict)
 			}
 			else
 			{
-				*((void **)prev) = next;
+				if(prev == NULL)
+				{
+					*(dict->buckets + index) = next;
+				}
+				else
+				{
+					*((void **)prev) = next;
+				}
 			}
 			return 1;
 		}
