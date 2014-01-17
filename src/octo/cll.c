@@ -244,8 +244,8 @@ int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
 	return 0;
 }
 
-//Delete the record with the given key. Return 1 on successful delete,
-//0 if the record isn't found.
+// Delete the record with the given key. Return 1 on successful delete,
+// 0 if the record isn't found.
 int octo_cll_delete(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
