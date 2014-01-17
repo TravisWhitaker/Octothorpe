@@ -76,7 +76,7 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket yet, insert the record:
-	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0 || *((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
 	{
 		*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xff;
 		memcpy((char *)dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen);
@@ -96,7 +96,7 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
 		// Is this bucket available?
-		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0 || *((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
 		{
 			*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xff;
 			memcpy((char *)dict->buckets + (index * (dict->cellen + 1)) + 1, key, dict->keylen);
@@ -124,6 +124,11 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
+	{
+		return (void *)dict;
+	}
+
 	//Is the bucket occupied? If so, did we find the key?
 	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
@@ -134,6 +139,11 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	while(atmpt <= dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
+		{
+			atmpt++;
+			continue;
+		}
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return (void *)dict;
@@ -156,6 +166,11 @@ void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
+	{
+		return (void *)dict;
+	}
+
 	//Is the bucket occupied? If so, did we find the key?
 	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
@@ -174,6 +189,11 @@ void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 	while(atmpt <= dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
+		{
+			atmpt++;
+			continue;
+		}
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return (void *)dict;
@@ -214,6 +234,11 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	while(atmpt <= dict->bucket_count)
 	{
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
+		{
+			atmpt++;
+			continue;
+		}
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
 			return 0;
@@ -224,6 +249,52 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 		}
 		atmpt++;
 	}
+	return 0;
+}
+
+// Delete the record with the given key. Return 1 on successful delete,
+// 0 if the record isn't found.
+int octo_loa_delete(const void *key, const octo_dict_loa_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
+	{
+		return 0;
+	}
+
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	{
+		*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xbe;
+		return 1;
+	}
+
+	uint64_t atmpt = 1;
+	while(atmpt <= dict->bucket_count)
+	{
+		index = index + 1 < dict->bucket_count ? index + 1 : 0;
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
+		{
+			printf("== 0xbe\n");
+			atmpt++;
+			continue;
+		}
+		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
+		{
+			printf("== 0\n");
+			return 0;
+		}
+		if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+		{
+			*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xbe;
+			return 1;
+		}
+		atmpt++;
+	}
+	printf("fell out\n");
 	return 0;
 }
 
@@ -292,7 +363,7 @@ octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen,
 
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*((char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0 || *((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0xbe)
 		{
 			continue;
 		}
@@ -378,7 +449,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 
 	for(uint64_t i = 0; i < dict->bucket_count; i++)
 	{
-		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0 || *((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0xbe)
 		{
 			continue;
 		}
@@ -411,6 +482,11 @@ octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0)
 		{
 			output->empty_buckets++;
+			continue;
+		}
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0xbe)
+		{
+			output->garbage_buckets++;
 			continue;
 		}
 		output->total_entries++;
@@ -452,6 +528,11 @@ void octo_loa_stats_msg(octo_dict_loa_t *dict)
 			output->empty_buckets++;
 			continue;
 		}
+		if(*((unsigned char *)dict->buckets + (i * (dict->cellen + 1))) == 0xbe)
+		{
+			output->garbage_buckets++;
+			continue;
+		}
 		output->total_entries++;
 		octo_hash((unsigned char const *)dict->buckets + (i * (dict->cellen + 1)) + 1, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 		if(i == hash % dict->bucket_count)
@@ -476,6 +557,7 @@ void octo_loa_stats_msg(octo_dict_loa_t *dict)
 	printf("empty buckets:%46llu\n", (unsigned long long)output->empty_buckets);
 	printf("optimal buckets:%44llu\n", (unsigned long long)output->optimal_buckets);
 	printf("colliding buckets:%42llu\n", (unsigned long long)output->colliding_buckets);
+	printf("garbage buckets:%44llu\n", (unsigned long long)output->garbage_buckets);
 	printf("load factor:%48Lf\n", output->load);
 	printf("############################################################\n");
 	free(output);

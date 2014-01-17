@@ -131,8 +131,14 @@ int main()
 		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	printf("test_loa: Looking up non-existent key...\n");
-	void *error_output = octo_loa_fetch("zxcvbde\0", (const octo_dict_loa_t *)test_loa);
+	printf("test_loa: Deleting record...\n");
+	if(octo_loa_delete(key1, (const octo_dict_loa_t *)test_loa) != 1)
+	{
+		printf("test_loa: FAILED: octo_loa_delete returned 0, deletion failed\n");
+		return 1;
+	}
+	printf("test_loa: Looking up deleted key...\n");
+	void *error_output = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa);
 	if(error_output == NULL)
 	{
 		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
@@ -143,9 +149,20 @@ int main()
 		printf("test_loa: FAILED: octo_loa_fetch reported hit for non-existent key\n");
 		return 1;
 	}
+	printf("test_loa: Re-inserting deleted record...\n");
+	if(octo_loa_insert(key1, val1, (const octo_dict_loa_t *)test_loa) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_insert failed to re-insert deleted record\n");
+		return 1;
+	}
 	octo_loa_stats_msg(test_loa);
 	printf("test_loa: Rehashing dict...\n");
 	test_loa = octo_loa_rehash(test_loa, test_loa->keylen, test_loa->vallen, 3, new_master_key);
+	if(test_loa == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_rehash returned NULL\n");
+		return 1;
+	}
 	octo_loa_stats_msg(test_loa);
 	printf("test_loa: Poking inserted records...\n");
 	if(!(octo_loa_poke(key1, (const octo_dict_loa_t *)test_loa)))
@@ -232,8 +249,14 @@ int main()
 		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	printf("test_loa: Looking up non-existent key...\n");
-	error_output = octo_loa_fetch("zxcvbde\n", (const octo_dict_loa_t *)test_loa);
+	printf("test_loa: Deleting record...\n");
+	if(octo_loa_delete(key2, (const octo_dict_loa_t *)test_loa) != 1)
+	{
+		printf("test_loa: FAILED: octo_loa_delete returned 0, deletion failed\n");
+		return 1;
+	}
+	printf("test_loa: Looking up deleted key...\n");
+	error_output = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa);
 	if(error_output == NULL)
 	{
 		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
@@ -244,13 +267,19 @@ int main()
 		printf("test_loa: FAILED: octo_loa_fetch reported hit for non-existent key\n");
 		return 1;
 	}
-	if(test_loa == NULL)
+	printf("test_loa: Re-inserting deleted record...\n");
+	if(octo_loa_insert(key2, val2, (const octo_dict_loa_t *)test_loa) != 0)
 	{
-		printf("test_loa: FAILED: octo_loa_rehash returned null\n");
+		printf("test_loa: FAILED: octo_loa_insert failed to re-insert deleted record\n");
 		return 1;
 	}
 	printf("test_loa: \"Safely\" rehashing dict...\n");
 	octo_dict_loa_t *test_loa_safe = octo_loa_rehash_safe(test_loa, test_loa->keylen, test_loa->vallen, 4096, new_master_key);
+	if(test_loa_safe == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_rehash_safe returned NULL\n");
+		return 1;
+	}
 	printf("test_loa: Deleting old dict...\n");
 	octo_loa_free(test_loa);
 	octo_loa_stats_msg(test_loa_safe);
@@ -339,8 +368,14 @@ int main()
 		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	printf("test_loa: Looking up non-existent key...\n");
-	error_output = octo_loa_fetch("zxcvbde\n", (const octo_dict_loa_t *)test_loa_safe);
+	printf("test_loa: Deleting record...\n");
+	if(octo_loa_delete(key3, (const octo_dict_loa_t *)test_loa_safe) != 1)
+	{
+		printf("test_loa: FAILED: octo_loa_delete returned 0, deletion failed\n");
+		return 1;
+	}
+	printf("test_loa: Looking up deleted key...\n");
+	error_output = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa_safe);
 	if(error_output == NULL)
 	{
 		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
@@ -351,9 +386,10 @@ int main()
 		printf("test_loa: FAILED: octo_loa_fetch reported hit for non-existent key\n");
 		return 1;
 	}
-	if(test_loa == NULL)
+	printf("test_loa: Re-inserting deleted record...\n");
+	if(octo_loa_insert(key3, val3, (const octo_dict_loa_t *)test_loa_safe) != 0)
 	{
-		printf("test_loa: FAILED: octo_loa_rehash returned null\n");
+		printf("test_loa: FAILED: octo_loa_insert failed to re-insert deleted record\n");
 		return 1;
 	}
 	printf("test_loa: Deleting loa_dict...\n");

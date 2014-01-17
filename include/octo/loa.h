@@ -19,6 +19,7 @@ typedef struct
 	uint64_t empty_buckets;
 	uint64_t optimal_buckets;
 	uint64_t colliding_buckets;
+	uint64_t garbage_buckets;
 	long double load;
 } octo_stat_loa_t;
 
