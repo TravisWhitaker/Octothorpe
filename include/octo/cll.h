@@ -29,6 +29,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict);
 void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict);
 int octo_cll_poke(const void *key, const octo_dict_cll_t *dict);
+int octo_cll_delete(const void *key, const octo_dict_cll_t *dict);
 octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key);
 octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key);
 octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict);

@@ -236,6 +236,37 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 	return 0;
 }
 
+// Delete the record with the given key. Return 1 on successful delete,
+// 0 if the record isn't found.
+int octo_carry_delete(const void *key, const octo_dict_carry_t *dict)
+{
+	uint64_t hash;
+	uint64_t index;
+	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	index = hash % dict->bucket_count;
+	// If there's nothing in the bucket, the key isn't in the dict:
+	if(*((uint8_t *)*(dict->buckets + index)) == 0)
+	{
+		return 0;
+	}
+	for(uint8_t i = 0; i < *((uint8_t *)*(dict->buckets + index)); i++)
+	{
+		if(memcmp(key, (uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i), dict->keylen) == 0)
+		{
+			// Copy each following record up to the preceeding cell space:
+			for(uint8_t j = 0; j < ((*((uint8_t *)*(dict->buckets + index))) - (i + 1)); j++)
+			{
+				memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i) + (dict->cellen * j),
+				(uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i) + (dict->cellen * (j + 1)), dict->cellen);
+			}
+			// Decrement the bucket record count.
+			(*((uint8_t *)*(dict->buckets + index)))--;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 // Re-create the carry_dict with a new key length, value length(both will be truncated), number of buckets,
 // tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
 octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
@@ -658,7 +689,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 		return;
 	}
 	output->load = ((long double)(output->total_entries))/((long double)(dict->bucket_count));
-	printf("\n######## libocto octo_dict_carry_t statistics summary ########\n");
+	printf("######## libocto octo_dict_carry_t statistics summary ########\n");
 	printf("virtual address:%46llu\n", (unsigned long long)dict);
 	printf("total entries:%48llu\n", (unsigned long long)output->total_entries);
 	printf("empty buckets:%48llu\n", (unsigned long long)output->empty_buckets);
@@ -666,7 +697,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 	printf("colliding buckets:%44llu\n", (unsigned long long)output->colliding_buckets);
 	printf("largest bucket:%47u\n", output->max_bucket_elements);
 	printf("load factor:%50Lf\n", output->load);
-	printf("##############################################################\n\n");
+	printf("##############################################################\n");
 	free(output);
 	return;
 }
