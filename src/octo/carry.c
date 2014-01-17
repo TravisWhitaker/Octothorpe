@@ -159,7 +159,7 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 }
 
 // Fetch a value from a carry_dict. Return NULL on error, return a pointer to
-// the carry_dict itself if the value is not found. The pointer referes to the
+// the carry_dict itself if the value is not found. The pointer refers to the
 // literal location of the value; if you don't want that, use *fetch_safe:
 void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
 {

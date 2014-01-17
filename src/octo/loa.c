@@ -124,17 +124,17 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
+	// Is the bucket occupied?
 	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
 	{
 		return (void *)dict;
 	}
-
-	//Is the bucket occupied? If so, did we find the key?
-	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	// If so, did we find the key?
+	if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
 		return (char *)dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen;
 	}
-	
+
 	uint64_t atmpt = 1;
 	while(atmpt <= dict->bucket_count)
 	{
@@ -166,13 +166,13 @@ void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
+	// Is the bucket occupied?
 	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
 	{
 		return (void *)dict;
 	}
-
-	//Is the bucket occupied? If so, did we find the key?
-	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	// If so, did we find the key?
+	if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
 		void *output = malloc(dict->vallen);
 		if(output == NULL)
@@ -184,7 +184,7 @@ void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 		memcpy(output, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1 + dict->keylen, dict->vallen);
 		return output;
 	}
-	
+
 	uint64_t atmpt = 1;
 	while(atmpt <= dict->bucket_count)
 	{
@@ -224,12 +224,17 @@ int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
-	//Is the bucket occupied? If so, did we find the key?
-	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	// Is the bucket occupied?
+	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
+	{
+		return 0;
+	}
+	// If so, did we find the key?
+	if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
 		return 1;
 	}
-	
+
 	uint64_t atmpt = 1;
 	while(atmpt <= dict->bucket_count)
 	{
@@ -261,12 +266,13 @@ int octo_loa_delete(const void *key, const octo_dict_loa_t *dict)
 	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
 	index = hash % dict->bucket_count;
 
+	// Is the bucket occupied?
 	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) != 0xff)
 	{
 		return 0;
 	}
-
-	if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xff && memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
+	// If so, did we find the key?
+	if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
 	{
 		*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) = 0xbe;
 		return 1;
@@ -278,13 +284,11 @@ int octo_loa_delete(const void *key, const octo_dict_loa_t *dict)
 		index = index + 1 < dict->bucket_count ? index + 1 : 0;
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0xbe)
 		{
-			printf("== 0xbe\n");
 			atmpt++;
 			continue;
 		}
 		if(*((unsigned char *)dict->buckets + (index * (dict->cellen + 1))) == 0)
 		{
-			printf("== 0\n");
 			return 0;
 		}
 		if(memcmp(key, (char *)dict->buckets + (index * (dict->cellen + 1)) + 1, dict->keylen) == 0)
@@ -294,7 +298,6 @@ int octo_loa_delete(const void *key, const octo_dict_loa_t *dict)
 		}
 		atmpt++;
 	}
-	printf("fell out\n");
 	return 0;
 }
 
