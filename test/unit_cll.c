@@ -131,8 +131,14 @@ int main()
 		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	printf("test_cll: Looking up non-existent key...\n");
-	void *error_output = octo_cll_fetch("zxcvbde\0", (const octo_dict_cll_t *)test_cll);
+	printf("test_cll: Deleting record...\n");
+	if(octo_cll_delete(key1, (const octo_dict_cll_t *)test_cll) == 0)
+	{
+		printf("test_cll: FAILED: octo_cll_delete returned 0, deletion failed\n");
+		return 1;
+	}
+	printf("test_cll: Looking up deleted key...\n");
+	void *error_output = octo_cll_fetch(key1, (const octo_dict_cll_t *)test_cll);
 	if(error_output == NULL)
 	{
 		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
@@ -143,9 +149,20 @@ int main()
 		printf("test_cll: FAILED: octo_cll_fetch reported hit for non-existent key\n");
 		return 1;
 	}
+	printf("test_cll: Re-inserting deleted key...\n");
+	if(octo_cll_insert(key1, val1, (const octo_dict_cll_t *)test_cll) != 0)
+	{
+		printf("test_cll: FAILED: octo_cll_insert failed to re-insert deleted record\n");
+		return 1;
+	}
 	octo_cll_stats_msg(test_cll);
 	printf("test_cll: Rehashing dict...\n");
 	test_cll = octo_cll_rehash(test_cll, test_cll->keylen, test_cll->vallen, 1, new_master_key);
+	if(test_cll == NULL)
+	{
+		printf("test_cll: FAILED: octo_cll_rehash returned null\n");
+		return 1;
+	}
 	octo_cll_stats_msg(test_cll);
 	printf("test_cll: Poking inserted records...\n");
 	if(!(octo_cll_poke(key1, (const octo_dict_cll_t *)test_cll)))
@@ -232,8 +249,14 @@ int main()
 		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	printf("test_cll: Looking up non-existent key...\n");
-	error_output = octo_cll_fetch("zxcvbde\n", (const octo_dict_cll_t *)test_cll);
+	printf("test_cll: Deleting record...\n");
+	if(octo_cll_delete(key2, (const octo_dict_cll_t *)test_cll) == 0)
+	{
+		printf("test_cll: FAILED: octo_cll_delete returned 0, deletion failed\n");
+		return 1;
+	}
+	printf("test_cll: Looking up deleted key...\n");
+	error_output = octo_cll_fetch(key2, (const octo_dict_cll_t *)test_cll);
 	if(error_output == NULL)
 	{
 		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
@@ -244,13 +267,19 @@ int main()
 		printf("test_cll: FAILED: octo_cll_fetch reported hit for non-existent key\n");
 		return 1;
 	}
-	if(test_cll == NULL)
+	printf("test_cll: Re-inserting deleted key...\n");
+	if(octo_cll_insert(key2, val2, (const octo_dict_cll_t *)test_cll) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_rehash returned null\n");
+		printf("test_cll: FAILED: octo_cll_insert failed to re-insert deleted record\n");
 		return 1;
 	}
 	printf("test_cll: \"Safely\" rehashing dict...\n");
 	octo_dict_cll_t *test_cll_safe = octo_cll_rehash_safe(test_cll, test_cll->keylen, test_cll->vallen, 4096, new_master_key);
+	if(test_cll_safe == NULL)
+	{
+		printf("test_cll: FAILED: octo_cll_rehash_safe returned null\n");
+		return 1;
+	}
 	printf("test_cll: Deleting old dict...\n");
 	octo_cll_free(test_cll);
 	octo_cll_stats_msg(test_cll_safe);
@@ -339,8 +368,14 @@ int main()
 		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
 		return 1;
 	}
-	printf("test_cll: Looking up non-existent key...\n");
-	error_output = octo_cll_fetch("zxcvbde\n", (const octo_dict_cll_t *)test_cll_safe);
+	printf("test_cll: Deleting record...\n");
+	if(octo_cll_delete(key3, (const octo_dict_cll_t *)test_cll_safe) == 0)
+	{
+		printf("test_cll: FAILED: octo_cll_delete returned 0, deletion failed\n");
+		return 1;
+	}
+	printf("test_cll: Looking up deleted key...\n");
+	error_output = octo_cll_fetch(key3, (const octo_dict_cll_t *)test_cll_safe);
 	if(error_output == NULL)
 	{
 		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
@@ -351,9 +386,10 @@ int main()
 		printf("test_cll: FAILED: octo_cll_fetch reported hit for non-existent key\n");
 		return 1;
 	}
-	if(test_cll == NULL)
+	printf("test_cll: Re-inserting deleted key...\n");
+	if(octo_cll_insert(key3, val3, (const octo_dict_cll_t *)test_cll_safe) != 0)
 	{
-		printf("test_cll: FAILED: octo_cll_rehash returned null\n");
+		printf("test_cll: FAILED: octo_cll_insert failed to re-insert deleted record\n");
 		return 1;
 	}
 	printf("test_cll: Deleting cll_dict...\n");
