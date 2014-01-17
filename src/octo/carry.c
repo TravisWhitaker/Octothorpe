@@ -259,14 +259,6 @@ int octo_carry_delete(const void *key, const octo_dict_carry_t *dict)
 				memcpy((uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i) + (dict->cellen * j),
 				(uint8_t *)*(dict->buckets + index) + 2 + (dict->cellen * i) + (dict->cellen * (j + 1)), dict->cellen);
 			}
-			/*
-			 * Do we need to zero out the last cell space?
-			 *
-			 * I think not, so long as we decrement the bucket record count.
-			 * We'll never read the cell for lookup collision handling. The next time
-			 * we access it, it'll be to write over it during insert collision handling.
-			 * Only Valgrind can say for sure...
-			 */
 			// Decrement the bucket record count.
 			(*((uint8_t *)*(dict->buckets + index)))--;
 			return 1;
