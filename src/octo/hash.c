@@ -31,7 +31,7 @@ do { \
 } while(0)
 
 // Given an arbitrary number input_length of bytes *input, give a 64-bit hash *output:
-void octo_hash(const unsigned char *input, unsigned long int input_length, unsigned char *output, const unsigned char *key)
+void octo_hash(const uint8_t *input, size_t input_length, uint8_t *output, const uint8_t *key)
 {
 	uint64_t stat_0 = 0x736f6d6570736575ULL;
 	uint64_t stat_1 = 0x646f72616e646f6dULL;
