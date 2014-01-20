@@ -602,7 +602,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	return output;
 }
 
-// Make a deep copy of a carry dict. Return NULL on error, pointer to the new
+// Make a deep copy of a carry_dict. Return NULL on error, pointer to the new
 // dict on success.
 octo_dict_carry_t *octo_carry_clone(octo_dict_carry_t *dict)
 {
