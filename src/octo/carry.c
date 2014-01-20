@@ -602,6 +602,51 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 	return output;
 }
 
+// Make a deep copy of a carry dict. Return NULL on error, pointer to the new
+// dict on success.
+octo_dict_carry_t *octo_carry_clone(octo_dict_carry_t *dict)
+{
+	// Allocate the new dict and populate trivial fields:
+	octo_dict_carry_t *output = malloc(sizeof(*output));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed allocating *output");
+		errno = ENOMEM;
+		return NULL;
+	}
+	output->keylen = dict->keylen;
+	output->vallen = dict->vallen;
+	output->cellen = dict->cellen;
+	output->bucket_count = dict->bucket_count;
+	memcpy(output->master_key, dict->master_key, 16);
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
+	void **buckets_tmp = calloc(output->bucket_count, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		// Allocate the new bucket clone:
+		*(output->buckets + i) = malloc((2 * sizeof(uint8_t)) + (output->cellen * (*((uint8_t *)*(dict->buckets + i) + 1))));
+		if(*(output->buckets + i) == NULL)
+		{
+			DEBUG_MSG("unable to malloc for *(output->buckets + i)");
+			errno = ENOMEM;
+			octo_carry_free(output);
+			return NULL;
+		}
+		// Copy the old bucket's contents:
+		memcpy(*(output->buckets + i), *(dict->buckets + i), (2 * sizeof(uint8_t)) + (output->cellen * (*((uint8_t *)*(dict->buckets + i) + 1))));
+	}
+	return output;
+}
+
 // Populate and return a pointer to a octo_stat_carry_t on success, NULL on error:
 octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
 {

@@ -392,8 +392,46 @@ int main()
 		printf("test_carry: FAILED: octo_carry_insert failed re-inserting deleted key\n");
 		return 1;
 	}
+	printf("test_carry: Cloning carry_dict...\n");
+	octo_dict_carry_t *test_carry_clone = octo_carry_clone(test_carry_safe);
+	if(test_carry_clone == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_clone returned NULL\n");
+		return 1;
+	}
+	printf("test_carry: Fetching inserted records from clone...\n");
+	output1 = octo_carry_fetch(key1, (const octo_dict_carry_t *)test_carry_clone);
+	output2 = octo_carry_fetch(key2, (const octo_dict_carry_t *)test_carry_clone);
+	output3 = octo_carry_fetch(key3, (const octo_dict_carry_t *)test_carry_clone);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_carry_safe || output2 == (void *)test_carry_safe || output3 == (void *)test_carry_safe)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_carry: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_carry: FAILED: octo_carry_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
 	printf("test_carry: Deleting carry_dict...\n");
 	octo_carry_free(test_carry_safe);
+	octo_carry_free(test_carry_clone);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_carry: SUCCESS!\n");
