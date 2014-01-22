@@ -399,6 +399,7 @@ int main()
 		printf("test_carry: FAILED: octo_carry_clone returned NULL\n");
 		return 1;
 	}
+	octo_carry_stats_msg(test_carry_clone);
 	printf("test_carry: Fetching inserted records from clone...\n");
 	output1 = octo_carry_fetch(key1, (const octo_dict_carry_t *)test_carry_clone);
 	output2 = octo_carry_fetch(key2, (const octo_dict_carry_t *)test_carry_clone);

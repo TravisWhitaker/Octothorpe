@@ -399,6 +399,7 @@ int main()
 		printf("test_cll: FAILED: octo_cll_clone returned NULL\n");
 		return 1;
 	}
+	octo_cll_stats_msg(test_cll_clone);
 	printf("test_cll: Fetching inserted records from clone...\n");
 	output1 = octo_cll_fetch(key1, (const octo_dict_cll_t *)test_cll_clone);
 	output2 = octo_cll_fetch(key2, (const octo_dict_cll_t *)test_cll_clone);
