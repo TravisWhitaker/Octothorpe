@@ -1,4 +1,4 @@
-// libocto Copyright (C) Travis Whitaker 2013
+// libocto Copyright (C) Travis Whitaker 2013-2014
 
 #ifndef OCTO_CARRY_H
 #define OCTO_CARRY_H

@@ -1,4 +1,4 @@
-// libocto copyright (c) travis whitaker 2013
+// libocto copyright (c) travis whitaker 2013-2014
 
 #include <stdio.h>
 #include <stdlib.h>

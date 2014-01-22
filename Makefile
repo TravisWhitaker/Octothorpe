@@ -1,4 +1,4 @@
-# libocto Copyright (C) Travis Whitaker 2013
+# libocto Copyright (C) Travis Whitaker 2013-2014
 
 # libocto is developed with clang:
 CC=clang
