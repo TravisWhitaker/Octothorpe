@@ -392,8 +392,46 @@ int main()
 		printf("test_cll: FAILED: octo_cll_insert failed to re-insert deleted record\n");
 		return 1;
 	}
+	printf("test_cll: Cloning cll_dict...\n");
+	octo_dict_cll_t *test_cll_clone = octo_cll_clone(test_cll_safe);
+	if(test_cll_clone == NULL)
+	{
+		printf("test_cll: FAILED: octo_cll_clone returned NULL\n");
+		return 1;
+	}
+	printf("test_cll: Fetching inserted records from clone...\n");
+	output1 = octo_cll_fetch(key1, (const octo_dict_cll_t *)test_cll_clone);
+	output2 = octo_cll_fetch(key2, (const octo_dict_cll_t *)test_cll_clone);
+	output3 = octo_cll_fetch(key3, (const octo_dict_cll_t *)test_cll_clone);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_cll: FAILED: octo_cll_fetch returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_cll || output2 == (void *)test_cll || output3 == (void *)test_cll)
+	{
+		printf("test_cll: FAILED: octo_cll_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_cll: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_cll: FAILED: octo_cll_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
 	printf("test_cll: Deleting cll_dict...\n");
 	octo_cll_free(test_cll_safe);
+	octo_cll_free(test_cll_clone);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_cll: SUCCESS!\n");
