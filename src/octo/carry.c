@@ -739,3 +739,7 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 	free(output);
 	return;
 }
+
+// Serialize a carry_dict into a flat array of bytes suitable for writing to a
+// file or deserializing into another octo_dict type. Return NULL on error,
+// pointer to array on success.
