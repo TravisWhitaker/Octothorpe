@@ -484,6 +484,76 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	return output;
 }
 
+// Make a deep copy of a cll_dict. Return NULL on error, pointer to the new
+// dict on success. Note that cloning cll_dicts is much slower than cloning
+// other dict types.
+octo_dict_cll_t *octo_cll_clone(octo_dict_cll_t *dict)
+{
+	// Allocate the new dict and populate trivial fields:
+	octo_dict_cll_t *output = malloc(sizeof(*output));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed allocating *output");
+		errno = ENOMEM;
+		return NULL;
+	}
+	output->keylen = dict->keylen;
+	output->vallen = dict->vallen;
+	output->cellen = dict->cellen;
+	output->bucket_count = dict->bucket_count;
+	memcpy(output->master_key, dict->master_key, 16);
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
+	void **buckets_tmp = calloc(output->bucket_count, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	void *src_this = NULL;
+	void *src_next = NULL;
+	void *new_this = NULL;
+	void *new_next = NULL;
+	void *tmp;
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		if(*(dict->buckets + i) == NULL)
+		{
+			continue;
+		}
+		src_this = *(dict->buckets + i);
+		while(src_this != NULL)
+		{
+			src_next = *((void **)src_this);
+			tmp = malloc(sizeof(void *) + output->cellen);
+			*((void **)tmp) = NULL;
+			// Is this the first node in this bucket?
+			if(*(output->buckets + i) == NULL)
+			{
+				memcpy((uint8_t *)tmp + sizeof(void *), (uint8_t *)src_this + sizeof(void *), output->cellen);
+				*(output->buckets + i) = tmp;
+			}
+			else
+			{
+				new_this = *(output->buckets + i);
+				new_next = *((void **)new_this);
+				while(new_next != NULL)
+				{
+					new_next = *((void **)new_this);
+					new_this = new_next;
+				}
+				memcpy((uint8_t *)tmp + sizeof(void *), (uint8_t *)src_this + sizeof(void *), output->cellen);
+				*((void **)new_this) = tmp;
+			}
+			src_this = src_next;
+		}
+	}
+	return output;
+}
+
 // Populate and return a pointer to a octo_stat_cll_t on success, NULL on error:
 octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 {
