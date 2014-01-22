@@ -110,7 +110,7 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 	uint64_t hash;
 	uint64_t index;
 
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket yet, insert the record:
@@ -159,13 +159,13 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 }
 
 // Fetch a value from a carry_dict. Return NULL on error, return a pointer to
-// the carry_dict itself if the value is not found. The pointer referes to the
+// the carry_dict itself if the value is not found. The pointer refers to the
 // literal location of the value; if you don't want that, use *fetch_safe:
 void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 	// If there's nothing in the bucket, the value isn't in the dict:
 	if(*((uint8_t *)*(dict->buckets + index)) == 0)
@@ -188,7 +188,7 @@ void *octo_carry_fetch_safe(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 	// If there's nothing in the bucket, the value isn't in the dict:
 	if(*((uint8_t *)*(dict->buckets + index)) == 0)
@@ -219,7 +219,7 @@ int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 	// If there's nothing in the bucket, the value isn't in the dict:
 	if(*((uint8_t *)*(dict->buckets + index)) == 0)
@@ -242,7 +242,7 @@ int octo_carry_delete(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 	// If there's nothing in the bucket, the key isn't in the dict:
 	if(*((uint8_t *)*(dict->buckets + index)) == 0)
@@ -343,7 +343,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 		{
 			memcpy(key_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), buffer_keylen);
 			memcpy(val_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), buffer_vallen);
-			octo_hash((const unsigned char *)key_buffer, (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
+			octo_hash((const uint8_t *)key_buffer, (size_t)output->keylen, (uint8_t *)&hash, (const uint8_t *)output->master_key);
 			index = hash % output->bucket_count;
 			// If there isn't a bucket at this position yet, alloc and insert:
 			if(*(output->buckets + index) == NULL)
@@ -512,7 +512,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 		{
 			memcpy(key_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), buffer_keylen);
 			memcpy(val_buffer, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j) + dict->keylen), buffer_vallen);
-			octo_hash((const unsigned char *)key_buffer, (unsigned long int)output->keylen, (unsigned char *)&hash, (const unsigned char *)output->master_key);
+			octo_hash((const uint8_t *)key_buffer, (size_t)output->keylen, (uint8_t *)&hash, (const uint8_t *)output->master_key);
 			index = hash % output->bucket_count;
 			// If there isn't a bucket at this position yet, alloc and insert:
 			if(*(output->buckets + index) == NULL)
@@ -598,6 +598,51 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 			*((uint8_t *)*(output->buckets + i)) = 0;
 			*((uint8_t *)*(output->buckets + i) + 1) = new_tolerance;
 		}
+	}
+	return output;
+}
+
+// Make a deep copy of a carry_dict. Return NULL on error, pointer to the new
+// dict on success.
+octo_dict_carry_t *octo_carry_clone(octo_dict_carry_t *dict)
+{
+	// Allocate the new dict and populate trivial fields:
+	octo_dict_carry_t *output = malloc(sizeof(*output));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed allocating *output");
+		errno = ENOMEM;
+		return NULL;
+	}
+	output->keylen = dict->keylen;
+	output->vallen = dict->vallen;
+	output->cellen = dict->cellen;
+	output->bucket_count = dict->bucket_count;
+	memcpy(output->master_key, dict->master_key, 16);
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
+	void **buckets_tmp = calloc(output->bucket_count, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		// Allocate the new bucket clone:
+		*(output->buckets + i) = malloc((2 * sizeof(uint8_t)) + (output->cellen * (*((uint8_t *)*(dict->buckets + i) + 1))));
+		if(*(output->buckets + i) == NULL)
+		{
+			DEBUG_MSG("unable to malloc for *(output->buckets + i)");
+			errno = ENOMEM;
+			octo_carry_free(output);
+			return NULL;
+		}
+		// Copy the old bucket's contents:
+		memcpy(*(output->buckets + i), *(dict->buckets + i), (2 * sizeof(uint8_t)) + (output->cellen * (*((uint8_t *)*(dict->buckets + i) + 1))));
 	}
 	return output;
 }
