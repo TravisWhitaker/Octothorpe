@@ -35,5 +35,6 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 octo_dict_cll_t *octo_cll_clone(octo_dict_cll_t *dict);
 octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict);
 void octo_cll_stats_msg(octo_dict_cll_t *dict);
+void *octo_cll_serialize(octo_dict_cll_t *dict, const void *target);
 
 #endif

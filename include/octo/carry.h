@@ -35,5 +35,6 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 octo_dict_carry_t *octo_carry_clone(octo_dict_carry_t *dict);
 octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict);
 void octo_carry_stats_msg(octo_dict_carry_t *dict);
+void *octo_carry_serialize(octo_dict_carry_t *dict, const void *target);
 
 #endif

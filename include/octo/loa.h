@@ -35,5 +35,6 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 octo_dict_loa_t *octo_loa_clone(octo_dict_loa_t *dict);
 octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict);
 void octo_loa_stats_msg(octo_dict_loa_t *dict);
+void *octo_loa_serialize(octo_dict_loa_t *dict, const void *target);
 
 #endif
