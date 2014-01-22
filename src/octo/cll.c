@@ -98,7 +98,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 	uint64_t index;
 	void *tmp;
 
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket yet, insert the record:
@@ -112,8 +112,8 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 			return 1;
 		}
 		*((void **)tmp) = NULL;
-		memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
-		memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
+		memcpy((uint8_t *)tmp + sizeof(void *), key, dict->keylen);
+		memcpy((uint8_t *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
 		*(dict->buckets + index) = tmp;
 		return 0;
 	}
@@ -125,9 +125,9 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 	while(this != NULL)
 	{
 		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		if(memcmp(key, (uint8_t *)this + sizeof(void *), dict->keylen) == 0)
 		{
-			memcpy((char *)this + sizeof(void *) + dict->keylen, value, dict->vallen);
+			memcpy((uint8_t *)this + sizeof(void *) + dict->keylen, value, dict->vallen);
 			return 0;
 		}
 		this = next;
@@ -142,8 +142,8 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 		return 1;
 	}
 	*((void **)tmp) = old_head;
-	memcpy((char *)tmp + sizeof(void *), key, dict->keylen);
-	memcpy((char *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
+	memcpy((uint8_t *)tmp + sizeof(void *), key, dict->keylen);
+	memcpy((uint8_t *)tmp + sizeof(void *) + dict->keylen, value, dict->vallen);
 	*(dict->buckets + index) = tmp;
 	return 0;
 }
@@ -155,7 +155,7 @@ void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket, the value isn't in the dict:
@@ -169,9 +169,9 @@ void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
 	while(this != NULL)
 	{
 		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		if(memcmp(key, (uint8_t *)this + sizeof(void *), dict->keylen) == 0)
 		{
-			return (char *)this + sizeof(void *) + dict->keylen;
+			return (uint8_t *)this + sizeof(void *) + dict->keylen;
 		}
 		this = next;
 	}
@@ -184,7 +184,7 @@ void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket, the value isn't in the dict:
@@ -198,7 +198,7 @@ void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict)
 	while(this != NULL)
 	{
 		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		if(memcmp(key, (uint8_t *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			void *output = malloc(dict->vallen);
 			if(output == NULL)
@@ -207,7 +207,7 @@ void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict)
 				errno = ENOMEM;
 				return NULL;
 			}
-			memcpy(output, (char *)this + sizeof(void *) + dict->keylen, dict->vallen);
+			memcpy(output, (uint8_t *)this + sizeof(void *) + dict->keylen, dict->vallen);
 			return output;
 		}
 		this = next;
@@ -221,7 +221,7 @@ int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket, the value isn't in the dict:
@@ -235,7 +235,7 @@ int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
 	while(this != NULL)
 	{
 		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		if(memcmp(key, (uint8_t *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			return 1;
 		}
@@ -250,7 +250,7 @@ int octo_cll_delete(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
 	uint64_t index;
-	octo_hash(key, dict->keylen, (unsigned char *)&hash, (const unsigned char *)dict->master_key);
+	octo_hash(key, dict->keylen, (uint8_t *)&hash, (const uint8_t *)dict->master_key);
 	index = hash % dict->bucket_count;
 
 	// If there's nothing in the bucket, the value isn't in the dict:
@@ -265,7 +265,7 @@ int octo_cll_delete(const void *key, const octo_dict_cll_t *dict)
 	while (this != NULL)
 	{
 		next = *((void **)this);
-		if(memcmp(key, (char *)this + sizeof(void *), dict->keylen) == 0)
+		if(memcmp(key, (uint8_t *)this + sizeof(void *), dict->keylen) == 0)
 		{
 			free(this);
 			if(next == NULL)
@@ -374,8 +374,8 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 		while(this != NULL)
 		{
 			next = *((void **)this);
-			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
+			memcpy(key_buffer, (uint8_t *)this + sizeof(void *), buffer_keylen);
+			memcpy(val_buffer, (uint8_t *)this + sizeof(void *) + dict->keylen, buffer_vallen);
 			if(octo_cll_insert(key_buffer, val_buffer, output) == 1)
 			{
 				DEBUG_MSG("octo_cll_insert() failed during rehash, lazy rehash used, data is unrecoverable");
@@ -469,8 +469,8 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 		while(this != NULL)
 		{
 			next = *((void **)this);
-			memcpy(key_buffer, (char *)this + sizeof(void *), buffer_keylen);
-			memcpy(val_buffer, (char *)this + sizeof(void *) + dict->keylen, buffer_vallen);
+			memcpy(key_buffer, (uint8_t *)this + sizeof(void *), buffer_keylen);
+			memcpy(val_buffer, (uint8_t *)this + sizeof(void *) + dict->keylen, buffer_vallen);
 			if(octo_cll_insert(key_buffer, val_buffer, output) == 1)
 			{
 				DEBUG_MSG("octo_cll_insert() failed during rehash, original cll_dict in known-good state");
@@ -481,6 +481,76 @@ octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_ke
 	}
 	free(key_buffer);
 	free(val_buffer);
+	return output;
+}
+
+// Make a deep copy of a cll_dict. Return NULL on error, pointer to the new
+// dict on success. Note that cloning cll_dicts is much slower than cloning
+// other dict types.
+octo_dict_cll_t *octo_cll_clone(octo_dict_cll_t *dict)
+{
+	// Allocate the new dict and populate trivial fields:
+	octo_dict_cll_t *output = malloc(sizeof(*output));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed allocating *output");
+		errno = ENOMEM;
+		return NULL;
+	}
+	output->keylen = dict->keylen;
+	output->vallen = dict->vallen;
+	output->cellen = dict->cellen;
+	output->bucket_count = dict->bucket_count;
+	memcpy(output->master_key, dict->master_key, 16);
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
+	void **buckets_tmp = calloc(output->bucket_count, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	void *src_this = NULL;
+	void *src_next = NULL;
+	void *new_this = NULL;
+	void *new_next = NULL;
+	void *tmp;
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		if(*(dict->buckets + i) == NULL)
+		{
+			continue;
+		}
+		src_this = *(dict->buckets + i);
+		while(src_this != NULL)
+		{
+			src_next = *((void **)src_this);
+			tmp = malloc(sizeof(void *) + output->cellen);
+			*((void **)tmp) = NULL;
+			// Is this the first node in this bucket?
+			if(*(output->buckets + i) == NULL)
+			{
+				memcpy((uint8_t *)tmp + sizeof(void *), (uint8_t *)src_this + sizeof(void *), output->cellen);
+				*(output->buckets + i) = tmp;
+			}
+			else
+			{
+				new_this = *(output->buckets + i);
+				new_next = *((void **)new_this);
+				while(new_next != NULL)
+				{
+					new_next = *((void **)new_this);
+					new_this = new_next;
+				}
+				memcpy((uint8_t *)tmp + sizeof(void *), (uint8_t *)src_this + sizeof(void *), output->cellen);
+				*((void **)new_this) = tmp;
+			}
+			src_this = src_next;
+		}
+	}
 	return output;
 }
 

@@ -1,0 +1,80 @@
+Hash Table Implementation Strategies
+====================================
+
+Chained Array(carry)
+--------------------
+In chained array tables, the hash function is used to index against an array of buckets, where each bucket consists of a 2 byte header followed by an array of variable length in an independently allocated heap block. The first byte of the header indicates the number of records in the bucket, while the second byte indicates the number of records that would fit in the bucket at its current size.
+
+┌───────────────────┐
+│ octo_dict_carry_t │
+├───────────────────┤
+│        b0*        ├────────────────────────────────────────┬───────────────┐
+├───────────────────┤                                        │ record number │
+│        b1*        ├──────────────────────┬───────────────┐ ├───────────────┤
+├───────────────────┤                      │ record number │ │  bucket size  │
+│        ...        │                      ├───────────────┤ ├───────────────┤
+├───────────────────┤                      │  bucket size  │ │       k0      │
+│        bn*        ├────┬───────────────┐ ├───────────────┤ ├───────────────┤
+└───────────────────┘    │ record number │ │       k0      │ │       v0      │
+                         ├───────────────┤ ├───────────────┤ ├───────────────┤
+                         │  bucket size  │ │       v0      │ │       ...     │
+                         ├───────────────┤ ├───────────────┤ ├───────────────┤
+                         │       k0      │ │       ...     │ │       kn      │
+                         ├───────────────┤ ├───────────────┤ ├───────────────┤
+                         │       v0      │ │       kn      │ │       vn      │
+                         ├───────────────┤ ├───────────────┤ └───────────────┘
+                         │       ...     │ │       vn      │
+                         ├───────────────┤ └───────────────┘
+                         │       kn      │
+                         ├───────────────┤
+                         │       vn      │
+                         └───────────────┘
+
+The key and value sizes in bytes must be provided at table initialization time, as well as the number of buckets to allocate and their initial size in terms of maximum record capacity(also known as 'tolerance'). Each of these may be adjusted by re-hashing the table. Note that shortening the key or value lengths will result in the truncation of all existing keys and values. Inserting a record whose key already exists in the table will overwrite the record's value. Lookups, insertions, and deletions are O(n) in the worst case with respect to relevant bucket size. The maximum size of a bucket is 254 elements. Any additional attempted insertions requiring a full bucket at the maximum size will fail. New records are always inserted at the end of a bucket and deletions re-pack the remaining records, so the first records added to a bucket always have the shortest lookup time. This property is not preserved during re-hashing.
+
+Chained arrays exhibit similar performance characteristics to chained linked lists. Walking down the records in the buckets is more efficient than serially dereferencing the pointers in the linked list nodes. However, chained linked lists have no limit on the number of collisions that may occur and more recently added keys have the shortest access time. Both chained linked lists and chained arrays handle much higher collision ratios better than any open addressing implementation strategy.
+
+Chained Linked List(cll)
+------------------------
+In chained linked list tables, the hash function is used to index against an array of buckets, where each bucket consists of a linked list. Each node in the linked list is an independently allocated heap block. Each node consists of a pointer to the next node, followed by a single record.
+
+┌─────────────────┐
+│ octo_dict_cll_t │
+├─────────────────┤
+│       b0*       ├────────────────────────┬───────┐
+├─────────────────┤                        │ next* ├────┬───────┐
+│       b1*       ├──────────────┬───────┐ ├───────┤    │ next* ├────┬───────┐
+├─────────────────┤              │ next* │ │   k   │    ├───────┤    │ next* │
+│       ...       │              ├───────┤ ├───────┤    │   k   │    ├───────┤
+├─────────────────┤              │   k   │ │   v   │    ├───────┤    │   k   │
+│       bn*       ├────┬───────┐ ├───────┤ └───────┘    │   v   │    ├───────┤
+└─────────────────┘    │ next* │ │   v   │              └───────┘    │   v   │
+                       ├───────┤ └───────┘                           └───────┘
+                       │   k   │
+                       ├───────┤
+                       │   v   │
+                       └───────┘
+
+The key and value sizes in bytes must be provided at table initialization time, as well as the number of buckets. Empty buckets are represented by a null pointer, so empty bucket overhead is much smaller than chained array tables(which pre-allocate all buckets). Note that shortening the key or value lengths during re-hashing will result in the truncation of all existing keys and values. Inserting a record whose key already exists in the table will overwrite the record's value. Lookups, insertions, and deletions are O(n) in the worst case with respect to the relevant bucket size. Maximum bucket size is limited only be allocatable memory. New records are inserted at the "beginning" of the bucket, so the first records added to a bucket always have the longest lookup time. This property is not preserved during re-hashing.
+
+Chained linked lists exhibit similar performance characteristics to chained arrays. Serially dereferencing the pointers in the linked list nodes is less efficient than walking down the buckets used in chained array tables. Both chained linked lists and chained arrays handle much higher collision ratios better than any open addressing implementation strategy.
+
+Linear Open Addressing(loa)
+---------------------------
+In linear open addressing tables, the hash function is used to index against an array of buckets, where each bucket consists of a single record.
+
+┌─────────────────┐
+│ octo_dict_loa_t │
+├─────────────────┤
+│       k0        │
+├─────────────────┤
+│       v0        │
+├─────────────────┤
+│       ...       │
+├─────────────────┤
+│       kn        │
+├─────────────────┤
+│       vn        │
+└─────────────────┘
+
+The key and value sizes in bytes must be provided at table initialization time, as well as the number of buckets. Note that shortening the key or value lengths during re-hashing will result in the truncation of all existing keys and values. Inserting a record whose key already exists in the table will overwrite the record's value. Open addressing tables have the fastest lookup and deletion time in the best case, however, performance decays more rapidly when faced with high collision ratios. Attempted inserts will fail if all of the buckets are full.
