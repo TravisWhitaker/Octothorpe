@@ -469,6 +469,40 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 	free(val_buffer);
 	return output;
 }
+// Make a deep copy of a loa_dict. Return NULL on error, pointer to the new
+// dict on success. Note that cloning loa_dicts is much faster than cloning
+// other dict types.
+octo_dict_loa_t *octo_loa_clone(octo_dict_loa_t *dict)
+{
+	// Allocate the new dict and populate trivial fields:
+	octo_dict_loa_t *output = malloc(sizeof(*output));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed allocating *output");
+		errno = ENOMEM;
+		return NULL;
+	}
+	output->keylen = dict->keylen;
+	output->vallen = dict->vallen;
+	output->cellen = dict->cellen;
+	output->bucket_count = dict->bucket_count;
+	memcpy(output->master_key, dict->master_key, 16);
+
+	// Allocate the new array of buckets:
+	void *buckets_tmp = calloc(output->bucket_count, output->cellen + 1);
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for *buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	// Nice and easy:
+	memcpy(output->buckets, dict->buckets, output->bucket_count * (output->cellen * 1));
+	return output;
+}
+
 // Populate and return a pointer to an octo_stat_loa_t on success, NULL on error:
 octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 {

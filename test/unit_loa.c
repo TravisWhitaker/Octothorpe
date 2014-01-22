@@ -392,8 +392,47 @@ int main()
 		printf("test_loa: FAILED: octo_loa_insert failed to re-insert deleted record\n");
 		return 1;
 	}
+	printf("test_loa: Cloning loa_dict...\n");
+	octo_dict_loa_t *test_loa_clone = octo_loa_clone(test_loa_safe);
+	if(test_loa_clone == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_clone returned NULL\n");
+		return 1;
+	}
+	octo_loa_stats_msg(test_loa_clone);
+	printf("test_loa: Fetching inserted records from clone...\n");
+	output1 = octo_loa_fetch(key1, (const octo_dict_loa_t *)test_loa_clone);
+	output2 = octo_loa_fetch(key2, (const octo_dict_loa_t *)test_loa_clone);
+	output3 = octo_loa_fetch(key3, (const octo_dict_loa_t *)test_loa_clone);
+	if(output1 == NULL || output2 == NULL || output3 == NULL)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned NULL\n");
+		return 1;
+	}
+	if(output1 == (void *)test_loa || output2 == (void *)test_loa || output3 == (void *)test_loa)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch couldn't find test value\n");
+		return 1;
+	}
+	printf("test_loa: Checking for correct values...\n");
+	if(memcmp(val1, output1, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"abcdefg\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val2, output2, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"bcdefgh\\0\"\n");
+		return 1;
+	}
+	if(memcmp(val3, output3, 64) != 0)
+	{
+		printf("test_loa: FAILED: octo_loa_fetch returned pointer to incorrect value for key \"cdefghi\\0\"\n");
+		return 1;
+	}
 	printf("test_loa: Deleting loa_dict...\n");
 	octo_loa_free(test_loa_safe);
+	octo_loa_free(test_loa_clone);
 	free(init_master_key);
 	free(new_master_key);
 	printf("test_loa: SUCCESS!\n");
