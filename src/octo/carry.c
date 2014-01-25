@@ -743,3 +743,35 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 // Serialize a carry_dict into a flat array of bytes suitable for writing to a
 // file or deserializing into another octo_dict type. Return NULL on error,
 // pointer to array on success.
+void *octo_carry_serialize(const octo_dict_carry_t *dict, void *target)
+{
+	uint8_t *cursor = target;
+	uint64_t record_count = 0;
+	// Count the number of records in the dict:
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		record_count += *((uint8_t *)*(dict->buckets + i));
+	}
+
+	// There's probably a better way to do this:
+	*((uint64_t *)cursor) = record_count;
+	cursor += sizeof(uint64_t);
+	*((size_t *)cursor) = dict->keylen;
+	cursor += sizeof(size_t);
+	*((size_t *)cursor) = dict->vallen;
+	cursor += sizeof(size_t);
+	memcpy(cursor, dict->master_key, 16);
+	cursor += 16;
+
+	// Now simply copy each key/value pair:
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
+		{
+			memcpy(cursor, ((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), dict->cellen);
+			cursor += dict->cellen;
+		}
+	}
+
+	return target;
+}
