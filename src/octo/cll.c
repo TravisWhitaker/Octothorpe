@@ -1,4 +1,4 @@
-// libocto Copyright (C) Travis Whitaker 2013
+// libocto Copyright (C) Travis Whitaker 2013-2014
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include <octo/hash.h>
 #include <octo/cll.h>
 
-// Allocate memory for and initialize a cll_dict:
+// Allocate memory for and initialize a cll_dict.
 octo_dict_cll_t *octo_cll_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t *init_master_key)
 {
 	// Make sure the arguments are valid:
@@ -48,26 +48,18 @@ octo_dict_cll_t *octo_cll_init(const size_t init_keylen, const size_t init_valle
 	void **buckets_tmp = calloc(init_buckets, sizeof(*buckets_tmp));
 	if(buckets_tmp == NULL)
 	{
-		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		DEBUG_MSG("unable to allocate bucket pointer array");
 		errno = ENOMEM;
 		free(output);
 		return NULL;
 	}
-
-	/*
-	 * Each bucket is a small linked list, and each node is a small heap
-	 * block because memory pooling is evil. This makes insertions slow
-	 * but deletions fast. The frist 4 or 8 bytes of each node is a
-	 * pointer to the next, so the overhead for each element is platform
-	 * dependent.
-	 */
 	output->bucket_count = init_buckets;
 	output->buckets = buckets_tmp;
 	memcpy(output->master_key, init_master_key, 16);
 	return output;
 }
 
-// Delete a cll_dict:
+// Delete a cll_dict.
 void octo_cll_free(octo_dict_cll_t *target)
 {
 	void *this = NULL;
@@ -91,7 +83,7 @@ void octo_cll_free(octo_dict_cll_t *target)
 	return;
 }
 
-// Insert a value into a cll_dict. Return 0 on success, 1 on malloc failure:
+// Insert a value into a cll_dict. Return 0 on success, 1 on malloc failure.
 int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
@@ -150,7 +142,7 @@ int octo_cll_insert(const void *key, const void *value, const octo_dict_cll_t *d
 
 // Fetch a value from a cll_dict. Return NULL on error, return a pointer to
 // the cll_dict itself if the value is not found. The pointer referes to the
-// literal location of the value; if you don't want that, use *fetch_safe:
+// literal location of the record. If you don't want that, use *fetch_safe.
 void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
@@ -179,7 +171,7 @@ void *octo_cll_fetch(const void *key, const octo_dict_cll_t *dict)
 }
 
 // Fetch a value from a cll_dict. Return NULL on error, return a pointer to
-// the cll_dict itself if the value is not found:
+// the cll_dict itself if the value is not found.
 void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
@@ -216,7 +208,7 @@ void *octo_cll_fetch_safe(const void *key, const octo_dict_cll_t *dict)
 }
 
 // Like octo_cll_fetch, but don't malloc/memcpy the value.
-// Return 1 if found, 0 if not:
+// Return 1 if found, 0 if not.
 int octo_cll_poke(const void *key, const octo_dict_cll_t *dict)
 {
 	uint64_t hash;
@@ -299,7 +291,7 @@ int octo_cll_delete(const void *key, const octo_dict_cll_t *dict)
 }
 
 // Re-create the cll_dict with a new key length, value length(both will be truncated), number of buckets,
-// and/or new master_key. Return pointer to new cll_dict on success, NULL on failure:
+// and/or new master_key. Return pointer to new cll_dict on success, NULL on failure.
 octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -394,7 +386,7 @@ octo_dict_cll_t *octo_cll_rehash(octo_dict_cll_t *dict, const size_t new_keylen,
 }
 
 // Like octo_cll_rehash, but retain the original dict. It is up to the caller
-// to free the old dict:
+// to free the old dict.
 octo_dict_cll_t *octo_cll_rehash_safe(octo_dict_cll_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -554,7 +546,7 @@ octo_dict_cll_t *octo_cll_clone(octo_dict_cll_t *dict)
 	return output;
 }
 
-// Populate and return a pointer to a octo_stat_cll_t on success, NULL on error:
+// Populate and return a pointer to a octo_stat_cll_t on success, NULL on error.
 octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 {
 	octo_stat_cll_t *output = calloc(1, sizeof(*output));
@@ -609,7 +601,7 @@ octo_stat_cll_t *octo_cll_stats(octo_dict_cll_t *dict)
 	return output;
 }
 
-// Print out a summary of octo_stat_cll_t for debugging purposes:
+// Print out a summary of octo_stat_cll_t for debugging purposes.
 void octo_cll_stats_msg(octo_dict_cll_t *dict)
 {
 	octo_stat_cll_t *output = calloc(1, sizeof(*output));

@@ -1,8 +1,7 @@
-// libocto Copyright (C) Travis Whitaker 2013
+// libocto Copyright (C) Travis Whitaker 2013-2014
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
 #include <errno.h>
@@ -12,7 +11,7 @@
 #include <octo/hash.h>
 #include <octo/carry.h>
 
-// Allocate memory for and initialize a carry_dict:
+// Allocate memory for and initialize a carry_dict.
 octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t init_tolerance, const uint8_t *init_master_key)
 {
 	// Make sure the arguments are valid:
@@ -53,24 +52,18 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	void **buckets_tmp = malloc(sizeof(*buckets_tmp) * init_buckets);
 	if(buckets_tmp == NULL)
 	{
-		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		DEBUG_MSG("unable to allocate bucket pointer array");
 		errno = ENOMEM;
 		free(output);
 		return NULL;
 	}
-	/*
-	 * Each bucket is a small heap block. This makes creating and deleting
-	 * carry_dicts slow and collision handling fast. Each bucket begins
-	 * with two unsigned integers(8-bit ints by default). The first is the
-	 * number of entries in the bucket, the next is the current number of
-	 * entries that will fit in the bucket:
-	 */
+	// Pre-allocate each bucket:
 	for(uint64_t i = 0; i < init_buckets; i++)
 	{
 		*(buckets_tmp + i) = malloc((2 * sizeof(uint8_t)) + (cellen_tmp * init_tolerance));
 		if(*(buckets_tmp + i) == NULL)
 		{
-			DEBUG_MSG("malloc returned null while initializing bucket");
+			DEBUG_MSG("unable to pre-allocate bucket");
 			errno = ENOMEM;
 			for(uint64_t j = 0; j < i; j++)
 			{
@@ -89,7 +82,7 @@ octo_dict_carry_t *octo_carry_init(const size_t init_keylen, const size_t init_v
 	return output;
 }
 
-// Delete a carry_dict:
+// Delete a carry_dict.
 void octo_carry_free(octo_dict_carry_t *target)
 {
 	for(uint64_t i = 0; i < target->bucket_count; i++)
@@ -104,7 +97,7 @@ void octo_carry_free(octo_dict_carry_t *target)
 	return;
 }
 
-// Insert a value into a carry_dict. Return 0 on success, 1 on malloc failure, 2 on unmanageable collision  :
+// Insert a value into a carry_dict. Return 0 on success, 1 on malloc failure, 2 on unmanageable collision.
 int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
@@ -160,7 +153,7 @@ int octo_carry_insert(const void *key, const void *value, const octo_dict_carry_
 
 // Fetch a value from a carry_dict. Return NULL on error, return a pointer to
 // the carry_dict itself if the value is not found. The pointer refers to the
-// literal location of the value; if you don't want that, use *fetch_safe:
+// literal location of the record. If you don't want that, use *fetch_safe.
 void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
@@ -183,7 +176,7 @@ void *octo_carry_fetch(const void *key, const octo_dict_carry_t *dict)
 }
 
 // Fetch a value from a carry_dict. Return NULL on error, return a pointer to
-// the carry_dict itself if the value is not found:
+// the carry_dict itself if the value is not found.
 void *octo_carry_fetch_safe(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
@@ -214,7 +207,7 @@ void *octo_carry_fetch_safe(const void *key, const octo_dict_carry_t *dict)
 }
 
 // Like octo_carry_fetch, but don't malloc/memcpy the value.
-// Return 1 if found, 0 if not:
+// Return 1 if found, 0 if not.
 int octo_carry_poke(const void *key, const octo_dict_carry_t *dict)
 {
 	uint64_t hash;
@@ -268,7 +261,7 @@ int octo_carry_delete(const void *key, const octo_dict_carry_t *dict)
 }
 
 // Re-create the carry_dict with a new key length, value length(both will be truncated), number of buckets,
-// tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure:
+// tolerance value, and/or new master_key. Return pointer to new carry_dict on success, NULL on failure.
 octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -364,7 +357,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 			// Collision:
 			else
 			{
-				bool found = false;
+				int found = 0;
 				// Search for the key(considering new key length) in the bucket:
 				for(uint8_t k = 0; k < *((uint8_t *)*(output->buckets + index)); k++)
 				{
@@ -372,11 +365,11 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 					{
 						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), val_buffer, output->vallen);
 						*((uint8_t *)*(output->buckets + index)) += 1;
-						found = true;
+						found = 1;
 						break;
 					}
 				}
-				if(found == false)
+				if(found == 0)
 				{
 					// If the bucket is at capacity, expand it:
 					if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
@@ -437,7 +430,7 @@ octo_dict_carry_t *octo_carry_rehash(octo_dict_carry_t *dict, const size_t new_k
 }
 
 // Like octo_carry_rehash, but retain the original dict. It is up to the caller
-// to free the old dict:
+// to free the old dict.
 octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t new_tolerance, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -533,7 +526,7 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 			// Collision:
 			else
 			{
-				bool found = false;
+				int found = 0;
 				// Search for the key(considering new key length) in the bucket:
 				for(uint8_t k = 0; k < *((uint8_t *)*(output->buckets + index)); k++)
 				{
@@ -541,11 +534,11 @@ octo_dict_carry_t *octo_carry_rehash_safe(octo_dict_carry_t *dict, const size_t 
 					{
 						memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * k) + output->keylen), val_buffer, output->vallen);
 						*((uint8_t *)*(output->buckets + index)) += 1;
-						found = true;
+						found = 1;
 						break;
 					}
 				}
-				if(found == false)
+				if(found == 0)
 				{
 					// If the bucket is at capacity, expand it:
 					if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
@@ -647,7 +640,7 @@ octo_dict_carry_t *octo_carry_clone(octo_dict_carry_t *dict)
 	return output;
 }
 
-// Populate and return a pointer to a octo_stat_carry_t on success, NULL on error:
+// Populate and return a pointer to a octo_stat_carry_t on success, NULL on error.
 octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
 {
 	octo_stat_carry_t *output = calloc(1, sizeof(*output));
@@ -692,7 +685,7 @@ octo_stat_carry_t *octo_carry_stats(octo_dict_carry_t *dict)
 	return output;
 }
 
-// Print out a summary of octo_stat_carry_t for debugging purposes:
+// Print out a summary of octo_stat_carry_t for debugging purposes.
 void octo_carry_stats_msg(octo_dict_carry_t *dict)
 {
 	octo_stat_carry_t *output = calloc(1, sizeof(*output));
