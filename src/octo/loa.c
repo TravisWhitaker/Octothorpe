@@ -1,4 +1,4 @@
-// libocto copyright (c) travis whitaker 2013
+// libocto copyright (c) travis whitaker 2013-2014
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include <octo/hash.h>
 #include <octo/loa.h>
 
-// Allocate memory for and initialize a loa_dict:
+// Allocate memory for and initialize a loa_dict.
 octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, const uint8_t *init_master_key)
 {
 	// Make sure the arguments are valid:
@@ -47,7 +47,7 @@ octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_valle
 	void *buckets_tmp = calloc(init_buckets, output->cellen + 1);
 	if(buckets_tmp == NULL)
 	{
-		DEBUG_MSG("unable to malloc for *buckets_tmp");
+		DEBUG_MSG("unable to allocate buckets");
 		errno = ENOMEM;
 		free(output);
 		return NULL;
@@ -58,7 +58,7 @@ octo_dict_loa_t *octo_loa_init(const size_t init_keylen, const size_t init_valle
 	return output;
 }
 
-// Delete a loa_dict:
+// Delete a loa_dict.
 void octo_loa_free(octo_dict_loa_t *target)
 {
 	free(target->buckets);
@@ -66,7 +66,7 @@ void octo_loa_free(octo_dict_loa_t *target)
 	return;
 }
 
-// Insert a value into a loa_dict. Return 0 on success, 1 on full bucket array:
+// Insert a value into a loa_dict. Return 0 on success, 1 on full bucket array.
 int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
@@ -116,7 +116,7 @@ int octo_loa_insert(const void *key, const void *value, const octo_dict_loa_t *d
 
 // Fetch a value from a loa_dict. Return NULL on error, return a pointer to
 // the loa_dict itself if the value is not found. The pointer referes to the
-// literal location of the value; if you don't want that, use *fetch_safe:
+// literal location of the value; if you don't want that, use *fetch_safe.
 void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
@@ -158,7 +158,7 @@ void *octo_loa_fetch(const void *key, const octo_dict_loa_t *dict)
 }
 
 // Fetch a value from a loa_dict. Return NULL on error, return a pointer to
-// the loa_dict itself if the value is not found:
+// the loa_dict itself if the value is not found.
 void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
@@ -216,7 +216,7 @@ void *octo_loa_fetch_safe(const void *key, const octo_dict_loa_t *dict)
 }
 
 // Like octo_loa_fetch, but don't malloc/memcpy the value.
-// Return 1 if found, 0 if not:
+// Return 1 if found, 0 if not.
 int octo_loa_poke(const void *key, const octo_dict_loa_t *dict)
 {
 	uint64_t hash;
@@ -302,7 +302,7 @@ int octo_loa_delete(const void *key, const octo_dict_loa_t *dict)
 }
 
 // Re-create the loa_dict with a new key length, value length(both will be truncated), number of buckets,
-// and/or new master_key. Return pointer to new loa_dict on success, NULL on failure:
+// and/or new master_key. Return pointer to new loa_dict on success, NULL on failure.
 octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -388,7 +388,7 @@ octo_dict_loa_t *octo_loa_rehash(octo_dict_loa_t *dict, const size_t new_keylen,
 }
 
 // Like octo_loa_rehash, but retain the original dict. It is up to the caller
-// to free the old dict:
+// to free the old dict.
 octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, const uint8_t *new_master_key)
 {
 	// Make sure the arguments are valid:
@@ -469,6 +469,7 @@ octo_dict_loa_t *octo_loa_rehash_safe(octo_dict_loa_t *dict, const size_t new_ke
 	free(val_buffer);
 	return output;
 }
+
 // Make a deep copy of a loa_dict. Return NULL on error, pointer to the new
 // dict on success. Note that cloning loa_dicts is much faster than cloning
 // other dict types.
@@ -503,7 +504,7 @@ octo_dict_loa_t *octo_loa_clone(octo_dict_loa_t *dict)
 	return output;
 }
 
-// Populate and return a pointer to an octo_stat_loa_t on success, NULL on error:
+// Populate and return a pointer to an octo_stat_loa_t on success, NULL on error.
 octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 {
 	octo_stat_loa_t *output = calloc(1, sizeof(*output));
@@ -547,7 +548,7 @@ octo_stat_loa_t *octo_loa_stats(octo_dict_loa_t *dict)
 	return output;
 }
 
-// Print out a summary of octo_stat_loa_t for debugging purposes:
+// Print out a summary of octo_stat_loa_t for debugging purposes.
 void octo_loa_stats_msg(octo_dict_loa_t *dict)
 {
 	octo_stat_loa_t *output = calloc(1, sizeof(*output));
