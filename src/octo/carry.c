@@ -740,6 +740,20 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict)
 	return;
 }
 
+// Compute the size a call to a carry_dict serialization function will require.
+// Return 0 on error.
+size_t octo_carry_serialsize(const octo_dict_carry_t *dict)
+{
+	uint64_t record_count = 0;
+	// Count the number of records in the dict:
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		record_count += *((uint8_t *)*(dict->buckets + 1));
+	}
+
+	return (sizeof(uint64_t) + (2 * sizeof(size_t)) + 16 + (record_count * dict->cellen));
+}
+
 // Serialize a carry_dict into a flat array of bytes suitable for writing to a
 // file or deserializing into another octo_dict type. Return NULL on error,
 // pointer to array on success.
@@ -774,4 +788,38 @@ void *octo_carry_serialize(const octo_dict_carry_t *dict, void *target)
 	}
 
 	return target;
+}
+
+// Serialize a carry_dict into a file stream. Return 0 on error, number
+// of bytes written on success.
+size_t octo_carry_fserialize(const octo_dict_carry_t *dict, FILE *stream)
+{
+	size_t total = 0;
+	uint64_t record_count = 0;
+	// Count the number of records in the dict:
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		record_count += *((uint8_t *)*(dict->buckets + i));
+	}
+
+	fwrite(&record_count, sizeof(uint64_t), 1, stream);
+	total += sizeof(uint64_t);
+	fwrite(&(dict->keylen), sizeof(size_t), 1, stream);
+	total += sizeof(size_t);
+	fwrite(&(dict->vallen), sizeof(size_t), 1, stream);
+	total += sizeof(size_t);
+	fwrite(&(dict->master_key), sizeof(uint8_t), 16, stream);
+	total += 16;
+
+	// Now simply copy each key/value pair:
+	for(uint64_t i = 0; i < dict->bucket_count; i++)
+	{
+		for(uint8_t j = 0; j < *((uint8_t *)*(dict->buckets + i)); j++)
+		{
+			fwrite(((uint8_t *)*(dict->buckets + i) + 2 + (dict->cellen * j)), dict->cellen, 1, stream);
+			total += dict->cellen;
+		}
+	}
+
+	return total;
 }
