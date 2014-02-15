@@ -38,5 +38,6 @@ void octo_carry_stats_msg(octo_dict_carry_t *dict);
 size_t octo_carry_serialsize(const octo_dict_carry_t *dict);
 void *octo_carry_serialize(const octo_dict_carry_t *dict, void *target);
 size_t octo_carry_fserialize(const octo_dict_carry_t *dict, FILE *stream);
+octo_dict_carry_t *octo_carry_deserialize(const uint64_t init_buckets, const uint8_t init_tolerance, void *target);
 
 #endif

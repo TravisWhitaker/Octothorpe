@@ -823,3 +823,144 @@ size_t octo_carry_fserialize(const octo_dict_carry_t *dict, FILE *stream)
 
 	return total;
 }
+
+// Deserialize a serialized dict into a new octo_dict. Return a pointer to the
+// new dict on success, NULL on error.
+octo_dict_carry_t *octo_carry_deserialize(const uint64_t init_buckets, const uint8_t init_tolerance, void *target)
+{
+	// Make sure the arguments are valid:
+	if(init_buckets <= 0)
+	{
+		DEBUG_MSG("init_buckets must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+	if(init_tolerance <= 0)
+	{
+		DEBUG_MSG("init_tolerance must not be zero");
+		errno = EINVAL;
+		return NULL;
+	}
+
+	uint8_t *cursor = target;
+
+	// Read and validate dict parameters from the target:
+	uint64_t record_count = *((uint64_t *)cursor);
+	if((init_buckets * 255) < record_count)
+	{
+		DEBUG_MSG("insufficient init_buckets to contain the target");
+		errno = EINVAL;
+		return NULL;
+	}
+	cursor += sizeof(uint64_t);
+	size_t new_keylen = *((size_t *)cursor);
+	cursor += sizeof(size_t);
+	size_t new_vallen = *((size_t *)cursor);
+	cursor += sizeof(size_t);
+	size_t new_cellen = new_keylen + new_vallen;
+	if(new_cellen < new_keylen)
+	{
+		DEBUG_MSG("size_t overflow, keylen + vallen is too large");
+		errno = EDOM;
+		return NULL;
+	}
+
+	octo_dict_carry_t *output = malloc(sizeof(*output));
+	if(output == NULL)
+	{
+		DEBUG_MSG("malloc failed allocating *output");
+		errno = ENOMEM;
+		return NULL;
+	}
+	output->keylen = new_keylen;
+	output->vallen = new_vallen;
+	output->cellen = new_cellen;
+	output->bucket_count = init_buckets;
+	memcpy(output->master_key, cursor, 16);
+	cursor += 16;
+
+	// Allocate the new array of bucket pointers, initializing them to NULL:
+	void **buckets_tmp = calloc(init_buckets, sizeof(*buckets_tmp));
+	if(buckets_tmp == NULL)
+	{
+		DEBUG_MSG("unable to malloc for **buckets_tmp");
+		errno = ENOMEM;
+		free(output);
+		return NULL;
+	}
+	output->buckets = buckets_tmp;
+	uint8_t *cursor_max = cursor + (output->cellen * record_count);
+	uint64_t hash;
+	uint64_t index;
+	while(cursor < cursor_max)
+	{
+		octo_hash((const uint8_t *)cursor, output->keylen, (uint8_t *)&hash, (const uint8_t *)output->master_key);
+		index = hash % output->bucket_count;
+		// If there isn't a bucket at this position yet, alloc and insert:
+		if(*(output->buckets + index) == NULL)
+		{
+			*(output->buckets + index) = malloc((2 * sizeof(uint8_t)) + (output->cellen * init_tolerance));
+			if(*(output->buckets + index) == NULL)
+			{
+				DEBUG_MSG("malloc failed while allocating new bucket");
+				errno = ENOMEM;
+				octo_carry_free(output);
+				return NULL;
+			}
+			*((uint8_t *)*(output->buckets + index)) = 1;
+			*((uint8_t *)*(output->buckets + index) + 1) = init_tolerance;
+			memcpy(((uint8_t *)*(output->buckets + index) + 2), cursor, output->keylen);
+			cursor += output->keylen;
+			memcpy(((uint8_t *)*(output->buckets + index) + 2 + output->keylen), cursor, output->vallen);
+			cursor += output->vallen;
+		}
+		// Collision. Assume the target is from a valid octo_dict(no duplicate keys):
+		else
+		{
+			// If the bucket is at capacity, expand it:
+			if(*((uint8_t *)*(output->buckets + index)) == *((uint8_t *)*(output->buckets + index) + 1))
+			{
+				if(*((uint8_t *)*(output->buckets + index)) == 255)
+				{
+					DEBUG_MSG("unmanageable collision");
+					octo_carry_free(output);
+					return NULL;
+				}
+				void *bigger_bucket = realloc(*(output->buckets + index), (2 * sizeof(uint8_t)) + (*((uint8_t *)*(output->buckets + index) + 1) + 1) * output->cellen);
+				if(bigger_bucket == NULL)
+				{
+					DEBUG_MSG("realloc failed while reconstructing carry_dict");
+					errno = ENOMEM;
+					octo_carry_free(output);
+					return NULL;
+				}
+				*(output->buckets + index) = bigger_bucket;
+				*((uint8_t *)*(output->buckets + index) + 1) += 1;
+			}
+			// Insert at the end of the bucket:
+			memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * (*((uint8_t *)*(output->buckets + index))))), cursor, output->keylen);
+			cursor += output->keylen;
+			memcpy(((uint8_t *)*(output->buckets + index) + 2 + (output->cellen * (*((uint8_t *)*(output->buckets + index)))) + output->keylen), cursor, output->vallen);
+			cursor += output->vallen;
+			*((uint8_t *)*(output->buckets + index)) += 1;
+		}
+	}
+	// Now allocate buckets for the remaining null pointers:
+	for(uint64_t i = 0; i < output->bucket_count; i++)
+	{
+		if(*(output->buckets + i) == NULL)
+		{
+			*(output->buckets + i) = malloc((2 * sizeof(uint8_t)) + (output->cellen * init_tolerance));
+			if(*(output->buckets + i) == NULL)
+			{
+				DEBUG_MSG("malloc failed while finalizing new carry_dict");
+				errno = ENOMEM;
+				octo_carry_free(output);
+				return NULL;
+			}
+			*((uint8_t *)*(output->buckets + i)) = 0;
+			*((uint8_t *)*(output->buckets + i) + 1) =init_tolerance;
+		}
+	}
+	return output;
+}
