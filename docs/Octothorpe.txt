@@ -1,62 +1,122 @@
-Implementation-Agnostic API Documentation
-=========================================
+Implementation Strategy Independent API Documentation
+=====================================================
 
-All table implementation strategies share nearly identical APIs. An tilde(~) in the middle of a function or struct name is a metasyntactic variable for an implementation strategy name, each of which is briefly outlined below. Implementation strategy-specific arguments to functions are enclosed by square brackets. Octothorpe makes use use of errno; the conditions that cause errno to be set are described in the implementation stragegy-specific documentation.
+All table implementation strategies share nearly identical APIs. A tilde(~) in
+the middle of a function or struct name is a metasyntactic variable for an
+implementation strategy name, each of which is briefly outlined below.
+Implementation strategy-specific arguments to functions are enclosed by square
+brackets. Octothorpe makes use use of errno; the conditions that cause errno to
+be set are described in the implementation stragegy-specific documentation.
 
-octo_dict_~_t octo_~_init(const size_t init_keylen, const size_t init_vallen, const uint64_t init_buckets, [const uint8_t init_tolerance,] const uint8_t *init_master_key)
+octo_dict_~_t octo_~_init(const size_t init_keylen, const size_t init_vallen,
+		const uint64_t init_buckets, [const uint8_t init_tolerance,]
+		const uint8_t *init_master_key)
 
-The ~_init functions are used to initialize hash tables. On success a pointer to the new table is returned, otherwise a null pointer is returned. Note that some implementation strategies involve extensive pre-allocation, so this function call has the potential to consume a lot of memory. The key and value sizes in bytes must be set at initialization time, however they may be changed later by re-hashing the table. A future release of Octothorpe will have a family of functions for easily dealing with strings, but for now it is up to the programmer to put any keys or values of potentially variable length into an initialized buffer. Some implementation strategies allow for a 'tolerance' value, which allows for pre-allocating space for a certain number of records. This can drastically increase collision handling speed in some cases.
+The ~_init functions are used to initialize hash tables. On success a pointer
+to the new table is returned, otherwise a null pointer is returned. Note that
+some implementation strategies involve extensive pre-allocation, so this
+function call has the potential to consume a lot of memory. The key and value
+sizes in bytes must be set at initialization time, however they may be changed
+later by re-hashing the table. A future release of Octothorpe will have a
+family of functions for easily dealing with strings, but for now it is up to
+the programmer to put any keys or values of potentially variable length into an
+initialized buffer. Some implementation strategies allow for a 'tolerance'
+value, which allows for pre-allocating space for a certain number of records.
+This can drastically increase collision handling speed in some cases.
 
 void octo_~_free(octo_dict_~_t *dict)
 
-The ~_free functions are used to delete entire hash tables. These functions are resilient and may be used to free malformed structs; they are used for failure handling in the implementation of other functions.
+The ~_free functions are used to delete entire hash tables. These functions are
+resilient and may be used to free malformed structs; they are used for failure
+handling in the implementation of other functions.
 
 int octo_~insert(const void *key, const void *value, const octo_dict_~_t *dict)
 
-The ~_insert functions are used to insert key/value pairs into tables. On success 0 is returned, 1 is returned on memory allocation error, and 2 is returned if an unmanageable collision occurs. Some implementation strategies can handle an arbitrary number of collisions; the insertion functions for these strategies will never return 2.
+The ~_insert functions are used to insert key/value pairs into tables.
+On success 0 is returned, 1 is returned on memory allocation error, and 2 is
+returned if an unmanageable collision occurs. Some implementation strategies
+can handle an arbitrary number of collisions; the insertion functions for these
+strategies will never return 2.
 
 void *octo_~_fetch(const void *key, const octo_dict_~_t *dict)
 
-The ~_fetch functions are used to lookup values from tables. On success a pointer to the value is returned, a null pointer is returned if an error occurs, and a pointer to the table itself is returned if the provided key wasn't found in the table. These functions do not pretend that the table's structure is opaque, and if your program misbehaves with the returned pointer data corruption may occur.
+The ~_fetch functions are used to lookup values from tables. On success a
+pointer to the value is returned, a null pointer is returned if an error
+occurs, and a pointer to the table itself is returned if the provided key
+wasn't found in the table. These functions do not pretend that the table's
+structure is opaque, and if your program misbehaves with the returned pointer
+data corruption may occur.
 
 void *octo_~_fetch_safe(const void *key, const octo_dict_~_t *dict)
 
-The ~fetch_safe functions are similar to the ~_fetch functions, but the pointer to the value returned on successful lookup refers to a dedicated heap block. It is up to your program to free this block.
+The ~fetch_safe functions are similar to the ~_fetch functions, but the pointer
+to the value returned on successful lookup refers to a dedicated heap block. It
+is up to your program to free this block.
 
 int octo_~_poke(const void *key, const octo_dict_~_t *dict)
 
-The ~_poke functions check if a record with a given key exists in a given table. 1 is returned if the key exists, 0 otherwise.
+The ~_poke functions check if a record with a given key exists in a given
+table. 1 is returned if the key exists, 0 otherwise.
 
-int octo_~_delete((const void *key, const octo_dict_~_t *dict)
+int octo_~_delete(const void *key, const octo_dict_~_t *dict)
 
-The ~_delete functions delete the record with a given key from a given table. 1 is returned if the key is successfully deleted, 0 otherwise. Deletions may or may not preserve certain record ordering properties in certain implementation strategies.
+The ~_delete functions delete the record with a given key from a given table. 1
+is returned if the key is successfully deleted, 0 otherwise. Deletions may or
+may not preserve certain record ordering properties in certain implementation
+strategies.
 
-octo_dict_~_t *octo_~_rehash(octo_dict_~_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, [const uint8_t new_tolerance,] const uint8_t *new_master_key)
+octo_dict_~_t *octo_~_rehash(octo_dict_~_t *dict, const size_t new_keylen,
+		const size_t new_vallen, const uint64_t new_buckets,
+		[const uint8_t new_tolerance,] const uint8_t *new_master_key)
 
-The ~_rehash functions are used to re-hash tables. This allows for changing the key length, value length, number of buckets, tolerance value(if applicable), or master key. If the new key or value lengths are shorter, all existing keys and values will be truncated. If they are longer, the end of all existing keys and values will be padded with 0x00. A pointer to the new table is returned on success, a null pointer otherwise. Note that the returned pointer may be the original table; in any other case the original pointer should not be used. If the re-hash fails, the original pointer should not be used.
+The ~_rehash functions are used to re-hash tables. This allows for changing the
+key length, value length, number of buckets, tolerance value(if applicable), or
+master key. If the new key or value lengths are shorter, all existing keys and
+values will be truncated. If they are longer, the end of all existing keys and
+values will be padded with 0x00. A pointer to the new table is returned on
+success, a null pointer otherwise. Note that the returned pointer may be the
+original table; in any other case the original pointer should not be used. If
+the re-hash fails, the original pointer should not be used.
 
-octo_dict_~_t *octo_~_rehash_safe(octo_dict_~_t *dict, const size_t new_keylen, const size_t new_vallen, const uint64_t new_buckets, [const uint8_t new_tolerance,] const uint8_t *new_master_key)
+octo_dict_~_t *octo_~_rehash_safe(octo_dict_~_t *dict, const size_t new_keylen,
+		const size_t new_vallen, const uint64_t new_buckets,
+		[const uint8_t new_tolerance,] const uint8_t *new_master_key)
 
-The ~_rehash_safe functions are similar to the ~_rehash functions, but the original table is preserved.
+The ~_rehash_safe functions are similar to the ~_rehash functions, but the
+original table is preserved.
 
 octo_dict_~_t *octo_~_clone(octo_dict_~_t *dict)
 
-The ~_clone functions make "deep copies" of hash tables. On success a pointer to a new table with identical records is returned, a null pointer is returned if an error occurs. The new table may or may not retain certain record ordering properties in certain implementation strategies. The performance of this function varies drastically depending on the implementation strategy; cloning chained linked list tables is especially slow.
+The ~_clone functions make "deep copies" of hash tables. On success a pointer
+to a new table with identical records is returned, a null pointer is returned
+if an error occurs. The new table may or may not retain certain record ordering
+properties in certain implementation strategies. The performance of this
+function varies drastically depending on the implementation strategy; cloning
+chained linked list tables is especially slow.
 
 octo_stat_~_t *octo_~_stats(octo_dict_~_t *dict)
 
-The ~_stats family of functions compute a collection of interesting table statistics that vary depending on the implementation strategy. On success a pointer to a ~_stats struct is returned, NULL otherwise.
+The ~_stats family of functions compute a collection of interesting table
+statistics that vary depending on the implementation strategy. On success a
+pointer to a ~_stats struct is returned, NULL otherwise.
 
 void octo_carry_stats_msg(octo_dict_carry_t *dict)
 
-The ~_stats_msg functions compute the same statistics as the ~_stats functions, but instead of providing them in a struct a digest is produced with printf.
+The ~_stats_msg functions compute the same statistics as the ~_stats functions,
+but instead of providing them in a struct a human-readable digest is produced
+with printf.
 
 Hash Table Implementation Strategies
 ====================================
 
 Chained Array(carry)
 --------------------
-In chained array tables, the hash function is used to index against an array of buckets, where each bucket consists of a 2 byte header followed by an array of variable length in an independently allocated heap block. The first byte of the header indicates the number of records in the bucket, while the second byte indicates the number of records that would fit in the bucket at its current size.
+In chained array tables, the hash function is used to index against an array of
+buckets, where each bucket consists of a 2 byte header followed by an array of
+variable length in an independently allocated heap block. The first byte of the
+header indicates the number of records in the bucket, while the second byte
+indicates the number of records that would fit in the bucket at its current
+size.
 
 ┌───────────────────┐
 │ octo_dict_carry_t │
@@ -83,13 +143,34 @@ In chained array tables, the hash function is used to index against an array of 
                          │       vn      │
                          └───────────────┘
 
-The key and value sizes in bytes must be provided at table initialization time, as well as the number of buckets to allocate and their initial size in terms of maximum record capacity(also known as 'tolerance'). Each of these may be adjusted by re-hashing the table. Note that shortening the key or value lengths will result in the truncation of all existing keys and values. Inserting a record whose key already exists in the table will overwrite the record's value. Lookups, insertions, and deletions are O(n) in the worst case with respect to relevant bucket size. The maximum size of a bucket is 254 elements. Any additional attempted insertions requiring a full bucket at the maximum size will fail. New records are always inserted at the end of a bucket and deletions re-pack the remaining records, so the first records added to a bucket always have the shortest lookup time. This property is preserved by table cloning but not re-hashing.
+The key and value sizes in bytes must be provided at table initialization time,
+as well as the number of buckets to allocate and their initial size in terms of
+maximum record capacity(also known as 'tolerance'). Each of these may be
+adjusted by re-hashing the table. Note that shortening the key or value lengths
+will result in the truncation of all existing keys and values. Inserting a
+record whose key already exists in the table will overwrite the record's value.
+Lookups, insertions, and deletions are O(n) in the worst case with respect to
+relevant bucket size. The maximum size of a bucket is 254 elements. Any
+additional attempted insertions requiring a full bucket at the maximum size
+will fail. New records are always inserted at the end of a bucket and deletions
+re-pack the remaining records, so the first records added to a bucket always
+have the shortest lookup time. This property is preserved by table cloning but
+not re-hashing.
 
-Chained arrays exhibit similar performance characteristics to chained linked lists. Walking down the records in the buckets is more efficient than serially dereferencing the pointers in the linked list nodes. However, chained linked lists have no limit on the number of collisions that may occur and more recently added keys have the shortest access time. Both chained linked lists and chained arrays handle much higher collision ratios better than any open addressing implementation strategy.
+Chained arrays exhibit similar performance characteristics to chained linked
+lists. Walking down the records in the buckets is more efficient than serially
+dereferencing the pointers in the linked list nodes. However, chained linked
+lists have no limit on the number of collisions that may occur and more
+recently added keys have the shortest access time. Both chained linked lists
+and chained arrays handle much higher collision ratios better than any open
+addressing implementation strategy.
 
 Chained Linked List(cll)
 ------------------------
-In chained linked list tables, the hash function is used to index against an array of buckets, where each bucket consists of a linked list. Each node in the linked list is an independently allocated heap block. Each node consists of a pointer to the next node, followed by a single record.
+In chained linked list tables, the hash function is used to index against an
+array of buckets, where each bucket consists of a linked list. Each node in the
+linked list is an independently allocated heap block. Each node consists of a
+pointer to the next node, followed by a single record.
 
 ┌─────────────────┐
 │ octo_dict_cll_t │
@@ -108,13 +189,28 @@ In chained linked list tables, the hash function is used to index against an arr
                        │   v   │
                        └───────┘
 
-The key and value sizes in bytes must be provided at table initialization time, as well as the number of buckets. Empty buckets are represented by a null pointer, so empty bucket overhead is much smaller than chained array tables(which pre-allocate all buckets). Note that shortening the key or value lengths during re-hashing will result in the truncation of all existing keys and values. Inserting a record whose key already exists in the table will overwrite the record's value. Lookups, insertions, and deletions are O(n) in the worst case with respect to the relevant bucket size. Maximum bucket size is limited only be available memory. New records are inserted at the "beginning" of the bucket, so the first records added to a bucket always have the longest lookup time. This property is preserved by table cloning but not re-hashing.
+The key and value sizes in bytes must be provided at table initialization time,
+as well as the number of buckets. Empty buckets are represented by a null
+pointer, so empty bucket overhead is much smaller than chained array tables
+(which pre-allocate all buckets). Note that shortening the key or value lengths
+during re-hashing will result in the truncation of all existing keys and
+values. Inserting a record whose key already exists in the table will overwrite
+the record's value. Lookups, insertions, and deletions are O(n) in the worst
+case with respect to the relevant bucket size. Maximum bucket size is limited
+only be available memory. New records are inserted at the "beginning" of the
+bucket, so the first records added to a bucket always have the longest lookup
+time. This property is preserved by table cloning but not re-hashing.
 
-Chained linked lists exhibit similar performance characteristics to chained arrays. Serially dereferencing the pointers in the linked list nodes is less efficient than walking down the buckets used in chained array tables. Both chained linked lists and chained arrays handle much higher collision ratios better than any open addressing implementation strategy.
+Chained linked lists exhibit similar performance characteristics to chained
+arrays. Serially dereferencing the pointers in the linked list nodes is less
+efficient than walking down the buckets used in chained array tables. Both
+chained linked lists and chained arrays handle much higher collision ratios
+better than any open addressing implementation strategy.
 
 Linear Open Addressing(loa)
 ---------------------------
-In linear open addressing tables, the hash function is used to index against an array of buckets, where each bucket consists of a single record.
+In linear open addressing tables, the hash function is used to index against an
+array of buckets, where each bucket consists of a single record.
 
 ┌─────────────────┐
 │ octo_dict_loa_t │
@@ -130,4 +226,11 @@ In linear open addressing tables, the hash function is used to index against an 
 │       vn        │
 └─────────────────┘
 
-The key and value sizes in bytes must be provided at table initialization time, as well as the number of buckets. Note that shortening the key or value lengths during re-hashing will result in the truncation of all existing keys and values. Inserting a record whose key already exists in the table will overwrite the record's value. Open addressing tables have the fastest lookup and deletion time in the best case, however, performance decays more rapidly when faced with high collision ratios. Attempted inserts will fail if all of the buckets are full.
+The key and value sizes in bytes must be provided at table initialization time,
+as well as the number of buckets. Note that shortening the key or value lengths
+during re-hashing will result in the truncation of all existing keys and
+values. Inserting a record whose key already exists in the table will overwrite
+the record's value. Open addressing tables have the fastest lookup and deletion
+time in the best case, however, performance decays more rapidly when faced with
+high collision ratios. Attempted inserts will fail if all of the buckets are
+full.

@@ -22,6 +22,6 @@ int main()
 		DEBUG_MSG(buf);
 	}
 	free(test_key);
-	printf("\ntest_keygen: SUCCESS!\n");
+	printf("test_keygen: SUCCESS!\n");
 	return 0;
 }
