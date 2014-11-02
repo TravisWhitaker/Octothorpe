@@ -1,4 +1,4 @@
-Implementation Strategy Independent API Documentation
+Implementation Strategy-Independent API Documentation
 =====================================================
 
 All table implementation strategies share nearly identical APIs. A tilde(~) in
