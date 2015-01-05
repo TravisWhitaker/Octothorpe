@@ -3,6 +3,8 @@
 #ifndef OCTO_CARRY_H
 #define OCTO_CARRY_H
 
+#include "types.h"
+
 typedef struct
 {
 	size_t keylen;

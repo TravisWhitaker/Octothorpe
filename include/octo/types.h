@@ -4,8 +4,8 @@
 #define OCTO_TYPES_H
 
 #ifdef NO_STDINT
-typedef uint8_t unsigned char;
-typedef uint64_t unsigned long long int;
+typedef unsigned char uint8_t;
+typedef unsigned long long int uint64_t;
 #else
 #include <stdint.h>
 #endif
