@@ -1,5 +1,9 @@
 // libocto Copyright (C) Travis Whitaker 2013-2014
 
+#ifdef __GNUC__
+#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
